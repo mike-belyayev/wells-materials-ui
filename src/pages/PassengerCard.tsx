@@ -1,4 +1,5 @@
 import './PassengerCard.css';
+import { isPast, isToday } from 'date-fns';
 
 interface PassengerCardProps {
   firstName: string;
@@ -9,9 +10,7 @@ interface PassengerCardProps {
   type: 'incoming' | 'outgoing';
   confirmed: boolean;
   numberOfPassengers?: number;
-  colorIntensity?: 'normal' | 'dark';
-  showSiteText?: boolean;
-  isPast?: boolean;
+  tripDate?: string; // NEW: Add tripDate to determine if it's past
 }
 
 export default function PassengerCard({ 
@@ -23,32 +22,17 @@ export default function PassengerCard({
   type,
   confirmed,
   numberOfPassengers,
-  colorIntensity = 'normal',
-  showSiteText = false,
-  isPast = false
+  tripDate // NEW: Trip date to determine past status
 }: PassengerCardProps) {
   const fullName = `${firstName} ${lastName}`;
   
-  // Get the relevant location for color coding
-  const location = type === 'incoming' ? fromOrigin : toDestination;
+  // Get the relevant location for display
+  const displayLocation = type === 'incoming' ? fromOrigin : toDestination;
   
-  // Site color mapping
-  const getSiteColor = (site: string): string => {
-    const siteUpper = site.toUpperCase();
-    switch (siteUpper) {
-      case 'STC': return '#000000'; // black
-      case 'NTM': return '#2e7d32'; // green
-      case 'NBD': return '#1565c0'; // blue
-      case 'NSC': return '#ff8f00'; // dark yellow
-      case 'OGLE': return '#9575cd'; // calm light purple
-      case 'NDT': return '#ffffff'; // white
-      default: return '#666666'; // default gray
-    }
-  };
-
-  const siteColor = getSiteColor(location);
+  // NEW: Determine if this trip is in the past
+  const isPastTrip = tripDate ? isPast(new Date(tripDate)) && !isToday(new Date(tripDate)) : false;
   
-  // Get the site abbreviation for display
+  // Get site abbreviation
   const getSiteAbbreviation = (site: string): string => {
     const siteUpper = site.toUpperCase();
     switch (siteUpper) {
@@ -56,38 +40,30 @@ export default function PassengerCard({
       case 'NTM': return 'NTM';
       case 'NBD': return 'NBD';
       case 'NSC': return 'NSC';
-      case 'OGLE': return 'OGL';
+      case 'OGLE': return '';
       case 'NDT': return 'NDT';
       default: return site.length > 3 ? site.substring(0, 3).toUpperCase() : site.toUpperCase();
     }
   };
 
-  const siteAbbreviation = getSiteAbbreviation(location);
+  const siteAbbreviation = getSiteAbbreviation(displayLocation);
+  const shouldShowSiteText = siteAbbreviation !== ''; // Only show if not empty (not Ogle)
   
-  // Determine if this is a group trip
+  // NEW: Determine if this is a group trip
   const isGroupTrip = numberOfPassengers && numberOfPassengers > 1;
   
   // Base classes
   const baseClasses = `passenger-card ${type} ${confirmed ? 'confirmed' : 'unconfirmed'}`;
   
-  // Add color intensity class
-  const colorClass = colorIntensity === 'dark' ? 'dark-intensity' : 'normal-intensity';
+  // NEW: Add past trip class
+  const pastClass = isPastTrip ? 'past-trip' : '';
   
-  // Add group trip class
+  // NEW: Add group trip class
   const groupClass = isGroupTrip ? 'group-trip' : '';
-  
-  // Add past day class
-  const pastClass = isPast ? 'past-day' : '';
 
   return (
     <div 
-      className={`${baseClasses} ${colorClass} ${groupClass} ${pastClass}`}
-      style={{ 
-        borderLeftColor: siteColor,
-        // Override border for group trips
-        ...(isGroupTrip && type === 'incoming' ? { borderLeftColor: '#0d47a1' } : {}),
-        ...(isGroupTrip && type === 'outgoing' ? { borderLeftColor: '#1b5e20' } : {})
-      }}
+      className={`${baseClasses} ${pastClass} ${groupClass}`}
     >
       <div className="passenger-content">
         <div className="passenger-main-info">
@@ -107,9 +83,9 @@ export default function PassengerCard({
         </div>
       </div>
       
-      {/* NEW: Site text on right edge */}
-      {showSiteText && (
-        <div className="site-text" title={location}>
+      {/* NEW: Site text on right edge - only show if not Ogle */}
+      {shouldShowSiteText && (
+        <div className="site-text" title={displayLocation}>
           {siteAbbreviation}
         </div>
       )}
