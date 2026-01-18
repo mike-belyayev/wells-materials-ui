@@ -9,6 +9,9 @@ interface PassengerCardProps {
   type: 'incoming' | 'outgoing';
   confirmed: boolean;
   numberOfPassengers?: number;
+  colorIntensity?: 'normal' | 'dark';
+  showSiteText?: boolean;
+  isPast?: boolean;
 }
 
 export default function PassengerCard({ 
@@ -19,7 +22,10 @@ export default function PassengerCard({
   toDestination,
   type,
   confirmed,
-  numberOfPassengers
+  numberOfPassengers,
+  colorIntensity = 'normal',
+  showSiteText = false,
+  isPast = false
 }: PassengerCardProps) {
   const fullName = `${firstName} ${lastName}`;
   
@@ -41,11 +47,47 @@ export default function PassengerCard({
   };
 
   const siteColor = getSiteColor(location);
+  
+  // Get the site abbreviation for display
+  const getSiteAbbreviation = (site: string): string => {
+    const siteUpper = site.toUpperCase();
+    switch (siteUpper) {
+      case 'STC': return 'STC';
+      case 'NTM': return 'NTM';
+      case 'NBD': return 'NBD';
+      case 'NSC': return 'NSC';
+      case 'OGLE': return 'OGL';
+      case 'NDT': return 'NDT';
+      default: return site.length > 3 ? site.substring(0, 3).toUpperCase() : site.toUpperCase();
+    }
+  };
+
+  const siteAbbreviation = getSiteAbbreviation(location);
+  
+  // Determine if this is a group trip
+  const isGroupTrip = numberOfPassengers && numberOfPassengers > 1;
+  
+  // Base classes
+  const baseClasses = `passenger-card ${type} ${confirmed ? 'confirmed' : 'unconfirmed'}`;
+  
+  // Add color intensity class
+  const colorClass = colorIntensity === 'dark' ? 'dark-intensity' : 'normal-intensity';
+  
+  // Add group trip class
+  const groupClass = isGroupTrip ? 'group-trip' : '';
+  
+  // Add past day class
+  const pastClass = isPast ? 'past-day' : '';
 
   return (
     <div 
-      className={`passenger-card ${type} ${confirmed ? 'confirmed' : 'unconfirmed'}`}
-      style={{ borderRightColor: siteColor }}
+      className={`${baseClasses} ${colorClass} ${groupClass} ${pastClass}`}
+      style={{ 
+        borderLeftColor: siteColor,
+        // Override border for group trips
+        ...(isGroupTrip && type === 'incoming' ? { borderLeftColor: '#0d47a1' } : {}),
+        ...(isGroupTrip && type === 'outgoing' ? { borderLeftColor: '#1b5e20' } : {})
+      }}
     >
       <div className="passenger-content">
         <div className="passenger-main-info">
@@ -64,6 +106,13 @@ export default function PassengerCard({
           </div>
         </div>
       </div>
+      
+      {/* NEW: Site text on right edge */}
+      {showSiteText && (
+        <div className="site-text" title={location}>
+          {siteAbbreviation}
+        </div>
+      )}
     </div>
   );
 }
