@@ -223,6 +223,7 @@ const HeliPage = () => {
   const navigate = useNavigate();
 
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const VISIBLE_WEEKS = 10; // CHANGED: From 2 to 10 weeks
 
   // Update location when user data loads or changes
   useEffect(() => {
@@ -316,8 +317,8 @@ const HeliPage = () => {
   };
 
   const generateWeeks = useCallback(() => {
-    // Show only 2 weeks: current week (0) and next week (1)
-    return [0, 1].map(relativeOffset => {
+    // Show VISIBLE_WEEKS weeks starting from weekOffset
+    return Array.from({ length: VISIBLE_WEEKS }, (_, relativeOffset) => {
       const weekStart = startOfWeek(addWeeks(new Date(), weekOffset + relativeOffset));
       const weekEnd = endOfWeek(weekStart);
       const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -358,83 +359,77 @@ const HeliPage = () => {
     return passengers.find(p => p._id === passengerId);
   };
 
-// In HeliPage.tsx - Update the handleAddPassenger function
-const handleAddPassenger = async (passengerData: { firstName: string; lastName: string; jobRole: string }) => {
-  try {
-    const response = await fetch(API_ENDPOINTS.PASSENGERS, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user?.token}`
-      },
-      body: JSON.stringify(passengerData),
-    });
+  const handleAddPassenger = async (passengerData: { firstName: string; lastName: string; jobRole: string }) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.PASSENGERS, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify(passengerData),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to add passenger');
-    }
-
-    const newPassenger = await response.json();
-    
-    // Force update the passengers list by refetching all passengers
-    // This ensures we have the complete, up-to-date list
-    const passengersResponse = await fetch(API_ENDPOINTS.PASSENGERS, {
-      headers: {
-        'Authorization': `Bearer ${user?.token}`,
-        'Content-Type': 'application/json'
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add passenger');
       }
-    });
-    
-    if (passengersResponse.ok) {
-      const allPassengers = await passengersResponse.json();
-      setPassengers(allPassengers);
-    } else {
-      // Fallback: just add the new passenger to the existing list
-      setPassengers(prev => [...prev, newPassenger]);
+
+      const newPassenger = await response.json();
+      
+      // Force update the passengers list by refetching all passengers
+      const passengersResponse = await fetch(API_ENDPOINTS.PASSENGERS, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (passengersResponse.ok) {
+        const allPassengers = await passengersResponse.json();
+        setPassengers(allPassengers);
+      } else {
+        setPassengers(prev => [...prev, newPassenger]);
+      }
+      
+      return newPassenger;
+    } catch (error) {
+      console.error('Error adding passenger:', error);
+      throw error;
     }
+  };
+
+  const handleAddTrip = async (tripData: {
+    passengerId: string;
+    fromOrigin: string;
+    toDestination: string;
+    tripDate: string;
+    confirmed: boolean;
+    numberOfPassengers?: number;
+  }) => {
+    if (!isAdmin) return;
     
-    return newPassenger;
-  } catch (error) {
-    console.error('Error adding passenger:', error);
-    throw error;
-  }
-};
+    try {
+      const response = await fetch(API_ENDPOINTS.TRIPS, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify(tripData),
+      });
 
-const handleAddTrip = async (tripData: {
-  passengerId: string;
-  fromOrigin: string;
-  toDestination: string;
-  tripDate: string;
-  confirmed: boolean;
-  numberOfPassengers?: number;
-}) => {
-  if (!isAdmin) return;
-  
-  try {
-    const response = await fetch(API_ENDPOINTS.TRIPS, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user?.token}`
-      },
-      body: JSON.stringify(tripData),
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add trip');
+      }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to add trip');
+      const newTrip = await response.json();
+      setTrips(prev => [...prev, newTrip]);
+    } catch (error) {
+      console.error('Error adding trip:', error);
     }
-
-    const newTrip = await response.json();
-    setTrips(prev => [...prev, newTrip]);
-    
-    // Don't close the modal here - let AddTripModal handle it
-    // setModalOpen(false); // REMOVE THIS LINE
-  } catch (error) {
-    console.error('Error adding trip:', error);
-  }
-};
+  };
 
   const handleUpdateTrip = async (updatedTrip: Trip) => {
     if (!isAdmin) return;
@@ -521,22 +516,25 @@ const handleAddTrip = async (tripData: {
     }
   };
 
+  // CHANGED: Now moves 10 weeks at a time
   const handlePrevWeek = () => {
-    setWeekOffset(prev => prev - 1);
+    setWeekOffset(prev => prev - VISIBLE_WEEKS);
   };
 
+  // CHANGED: Now moves 10 weeks at a time
   const handleNextWeek = () => {
-    setWeekOffset(prev => prev + 1);
+    setWeekOffset(prev => prev + VISIBLE_WEEKS);
   };
 
   const handleToday = () => {
-    setWeekOffset(0); // Reset to show current week + next week
+    setWeekOffset(0); // Reset to show current week + next 9 weeks
   };
 
+  // CHANGED: Now shows 10-week range
   const getWeekRangeDisplay = () => {
     if (weeksData.length === 0) return '';
     const firstWeek = weeksData[0][0].date;
-    const lastWeek = weeksData[weeksData.length - 1][6].date;
+    const lastWeek = weeksData[VISIBLE_WEEKS - 1][6].date;
     return `${format(firstWeek, 'MMM d')} - ${format(lastWeek, 'MMM d, yyyy')}`;
   };
 
@@ -695,7 +693,8 @@ const handleAddTrip = async (tripData: {
         ))}
       </div>
       
-      <div className="week-container">
+      {/* CHANGED: Container class from "week-container" to "weeks-scroll-container" */}
+      <div className="weeks-scroll-container">
         {weeksData.length > 0 ? (
           weeksData.map((week, weekIndex) => (
             <div key={weekIndex} className="week-row">

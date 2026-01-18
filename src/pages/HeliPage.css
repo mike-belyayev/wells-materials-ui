@@ -1,4 +1,4 @@
-/* HeliPage.css - Updated for new features */
+/* HeliPage.css - Updated for 10-week view */
 .dashboard-container * {
   font-family: Arial, sans-serif;
 }
@@ -100,27 +100,26 @@
   min-width: 0;
 }
 
-/* NEW: Weeks scroll container for 10 weeks */
+/* CHANGED: Replace .week-container with .weeks-scroll-container for 10 weeks */
 .weeks-scroll-container {
   overflow-y: auto;
   overflow-x: hidden;
-  flex: 1;
   height: calc(100vh - 120px); /* Adjust based on your header heights */
   display: flex;
   flex-direction: column;
 }
 
-/* Week row grid - 7 equal columns with auto height */
+/* CHANGED: Week row now stacks vertically instead of 2-row grid */
 .week-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  height: auto;
-  min-height: fit-content;
-  border-bottom: 1px solid #ddd;
   flex-shrink: 0;
+  min-height: fit-content;
+  height: auto;
+  border-bottom: 1px solid #ddd;
 }
 
-/* Day column grid with auto height */
+/* Day column with auto height */
 .day-column {
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -128,35 +127,8 @@
   background-color: white;
   position: relative;
   height: auto;
-  min-height: 150px; /* Minimum height */
+  min-height: 150px; /* Minimum height for empty days */
   min-width: 0;
-}
-
-/* NEW: Past days styling */
-.day-column.past-day {
-  opacity: 0.6;
-  background-color: #f9f9f9;
-}
-
-.day-column.past-day .date-header {
-  color: #888;
-  background-color: #f0f0f0;
-}
-
-.day-column.past-day .passenger-card {
-  opacity: 0.7;
-  filter: grayscale(0.5);
-}
-
-.day-column.past-day .add-button {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #cccccc;
-}
-
-.day-column.past-day .add-button:hover {
-  background-color: #cccccc;
-  color: #b1afaf;
 }
 
 /* Remove right border from the last day column */
@@ -189,7 +161,6 @@
 /* Horizontal layout for passenger lists */
 .passenger-lists {
   grid-row: 2;
-  height: 100%;
   overflow: hidden;
   min-height: 0;
 }
@@ -227,43 +198,6 @@
   min-height: 0;
 }
 
-/* NEW: Sortable container styles */
-.sortable-container {
-  min-height: 40px;
-  position: relative;
-}
-
-.sortable-item {
-  cursor: grab;
-  transition: transform 0.2s ease;
-  position: relative;
-}
-
-.sortable-item:hover {
-  transform: translateX(2px);
-  z-index: 5;
-}
-
-.sortable-item.dragging {
-  opacity: 0.5;
-}
-
-.sortable-item.drag-over {
-  border-top: 3px solid #1976d2;
-  margin-top: 4px;
-}
-
-.sortable-item.drag-over::before {
-  content: "⇓";
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #1976d2;
-  font-size: 12px;
-  font-weight: bold;
-}
-
 .pob-footer {
   padding: 3px;
   text-align: center;
@@ -281,12 +215,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   grid-row: 3;
-}
-
-/* NEW: Past POB styling */
-.pob-footer.past {
-  background-color: #f0f0f0 !important;
-  color: #888 !important;
 }
 
 /* Normal POB - Light green background, dark green text */
@@ -329,7 +257,7 @@
   z-index: 3;
 }
 
-.add-button:hover:not(:disabled) {
+.add-button:hover {
   background: rgba(0, 255, 42, 0.815);
   font-weight: bold;
   color: black;
@@ -348,146 +276,18 @@
   cursor: grab;
   margin-bottom: 2px;
   flex-shrink: 0;
-  position: relative;
 }
 
-/* NEW: Group trip styling */
-.passenger-card-container.group-trip .passenger-card.incoming {
-  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
-  border-left: 4px solid #0d47a1 !important;
-}
-
-.passenger-card-container.group-trip .passenger-card.outgoing {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
-  border-left: 4px solid #1b5e20 !important;
-}
-
-/* NEW: Site text styling */
-.site-text {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  text-orientation: mixed;
-  font-size: 10px;
-  font-weight: bold;
-  color: white;
-  padding: 4px 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.passenger-card-container.readonly {
-  cursor: default !important;
-}
-
-.passenger-card-container.readonly:hover {
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-/* Disabled add button */
-.add-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.passenger-card-container.dragging {
   opacity: 0.5;
 }
 
-.user-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.user-email {
-  font-size: 0.9rem;
-  color: lime;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.date-header,
-.pob-footer {
-  height: clamp(1.2rem, 1.5rem + (100vw - 1920px) * 0.02, 1.8rem);
-  font-size: var(--compact-font-size);
-  padding: var(--spacing-xs);
-}
-
-/* NEW: POB update info styling */
-.pob-update-info {
-  font-size: 0.6rem;
-  margin-left: 4px;
-  opacity: 0.8;
-  font-style: italic;
-}
-
-/* Ensure the entire page can scroll when content overflows */
-.dashboard-container {
-  overflow: auto;
-}
-
-/* Handle very narrow screens */
-@media (max-width: 768px) {
-  .days-header,
-  .week-row {
-    grid-template-columns: repeat(7, 1fr);
-  }
-  
-  .date-header,
-  .pob-footer {
-    font-size: 0.7rem;
-  }
-  
-  .site-text {
-    font-size: 8px;
-    padding: 2px 1px;
-  }
-}
-
-/* Empty state styling */
-.passenger-cards-container:empty::before {
-  content: "No passengers";
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  color: #999;
-  font-size: 0.7rem;
-  font-style: italic;
-}
-
-/* Drag and drop improvements */
-.incoming-section.drop-target,
-.outgoing-section.drop-target {
+.drop-target {
   background-color: rgba(255, 255, 0, 0.2);
-  border: 2px dashed #ffeb3b;
+  border: 1px dashed #ccc;
 }
 
-/* Make sure all grid areas fill available space */
-.weeks-scroll-container > * {
-  min-height: 0;
-}
-
-/* Fix for Firefox scrollbar */
-.passenger-cards-container {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.1);
-}
-
-/* NEW: Passenger cards container with scrolling */
+/* Passenger cards container with scrolling */
 .passenger-cards-container {
   overflow-y: auto;
   overflow-x: hidden;
@@ -497,7 +297,6 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  gap: 2px;
 }
 
 .passenger-cards-container::-webkit-scrollbar {
@@ -528,43 +327,50 @@
   background-color: red;
 }
 
-/* NEW: Week container is replaced with weeks-scroll-container */
-
-/* Week row hover effect for better visual separation */
-.week-row:hover .day-column:not(.past-day) {
-  background-color: #fafafa;
+/* Readonly cards */
+.passenger-card-container.readonly {
+  cursor: default !important;
 }
 
-/* NEW: Adjusted for 10 weeks view */
-.weeks-scroll-container {
-  max-height: none;
-  height: auto;
-  min-height: 0;
+.passenger-card-container.readonly:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-/* NEW: Prevent text selection during drag */
-.sortable-item {
-  user-select: none;
+/* Disabled add button */
+.add-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
-/* NEW: Visual feedback for drag operation */
-@keyframes pulse {
-  0% { border-color: #1976d2; }
-  50% { border-color: #64b5f6; }
-  100% { border-color: #1976d2; }
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.sortable-item.drag-over {
-  animation: pulse 1s infinite;
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* NEW: Adjust passenger card for site text */
-.passenger-card {
-  position: relative;
-  padding-right: 24px !important; /* Make room for site text */
+.user-email {
+  font-size: 0.9rem;
+  color: lime;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* NEW: Scrollbar for weeks container */
+.date-header,
+.pob-footer {
+  height: clamp(1.2rem, 1.5rem + (100vw - 1920px) * 0.02, 1.8rem);
+  font-size: var(--compact-font-size);
+  padding: var(--spacing-xs);
+}
+
+/* Scrollbar for weeks container */
 .weeks-scroll-container::-webkit-scrollbar {
   width: 8px;
 }
@@ -580,4 +386,34 @@
 
 .weeks-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Handle very narrow screens */
+@media (max-width: 768px) {
+  .days-header,
+  .week-row {
+    grid-template-columns: repeat(7, 1fr);
+  }
+  
+  .date-header,
+  .pob-footer {
+    font-size: 0.7rem;
+  }
+}
+
+/* Empty state styling */
+.passenger-cards-container:empty::before {
+  content: "No passengers";
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #999;
+  font-size: 0.7rem;
+  font-style: italic;
+}
+
+/* Make sure all grid areas fill available space */
+.weeks-scroll-container > * {
+  min-height: 0;
 }
