@@ -1,4 +1,4 @@
-/* PassengerCard.css - Updated for past trips and site text on right */
+/* PassengerCard.css - Ensure past-trip overrides EVERYTHING */
 .passenger-card {
   border-radius: 0.1875rem;
   color: white;
@@ -17,7 +17,6 @@
   margin-bottom: var(--spacing-xs);
   position: relative;
   overflow: hidden;
-  /* Removed border-left, now using background colors only */
 }
 
 .passenger-card:hover:not(.past-trip) {
@@ -42,40 +41,20 @@
   background-color: rgba(21, 101, 192, 0.6);
 }
 
-/* NEW: Past trip styling - ALL GREY */
-.passenger-card.past-trip {
-  background-color: #e0e0e0 !important; /* Light grey background */
-  color: #666 !important; /* Dark grey text */
-  opacity: 1 !important;
-  filter: none !important;
-}
-
-.passenger-card.past-trip .passenger-name,
-.passenger-card.past-trip .passenger-job {
-  color: #666 !important;
-  text-shadow: none !important;
-}
-
-.passenger-card.past-trip .passenger-count {
-  background-color: rgba(0, 0, 0, 0.15) !important;
-  color: #666 !important;
-  border: 1px solid rgba(0, 0, 0, 0.2) !important;
-}
-
 /* Group trip styling - FUTURE TRIPS ONLY */
-.passenger-card.group-trip.incoming.confirmed:not(.past-trip) {
+.passenger-card.group-trip.incoming.confirmed {
   background: linear-gradient(135deg, #1b5e20 0%, #0d4016 100%);
 }
 
-.passenger-card.group-trip.outgoing.confirmed:not(.past-trip) {
+.passenger-card.group-trip.outgoing.confirmed {
   background: linear-gradient(135deg, #0d47a1 0%, #082b5c 100%);
 }
 
-.passenger-card.group-trip.incoming.unconfirmed:not(.past-trip) {
+.passenger-card.group-trip.incoming.unconfirmed {
   background: linear-gradient(135deg, rgba(27, 94, 32, 0.8) 0%, rgba(13, 64, 22, 0.8) 100%);
 }
 
-.passenger-card.group-trip.outgoing.unconfirmed:not(.past-trip) {
+.passenger-card.group-trip.outgoing.unconfirmed {
   background: linear-gradient(135deg, rgba(13, 71, 161, 0.8) 0%, rgba(8, 43, 92, 0.8) 100%);
 }
 
@@ -102,11 +81,39 @@
   max-width: 1rem;
 }
 
-/* For past trips, make site text grey */
+/* CRITICAL FIX: PAST TRIP STYLING - MUST OVERRIDE EVERYTHING */
+/* Using more specific selectors to ensure they win */
+.passenger-card.past-trip,
+.passenger-card.past-trip.incoming,
+.passenger-card.past-trip.outgoing,
+.passenger-card.past-trip.confirmed,
+.passenger-card.past-trip.unconfirmed,
+.passenger-card.past-trip.group-trip,
+.passenger-card.past-trip.group-trip.incoming,
+.passenger-card.past-trip.group-trip.outgoing,
+.passenger-card.past-trip.group-trip.confirmed,
+.passenger-card.past-trip.group-trip.unconfirmed {
+  background-color: #e0e0e0 !important; /* Light grey background */
+  color: #666 !important; /* Dark grey text */
+  background-image: none !important; /* Remove gradients */
+}
+
+.passenger-card.past-trip .passenger-name,
+.passenger-card.past-trip .passenger-job {
+  color: #666 !important;
+  text-shadow: none !important;
+}
+
+.passenger-card.past-trip .passenger-count {
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  color: #666 !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
 .passenger-card.past-trip .site-text {
-  background-color: #f0f0f0;
-  color: #888;
-  border-left: 1px solid #ddd;
+  background-color: #f0f0f0 !important;
+  color: #888 !important;
+  border-left: 1px solid #ddd !important;
 }
 
 .passenger-content {
@@ -139,17 +146,18 @@
   height: 1.2rem;
 }
 
-/* Enhanced group trip count badge */
+/* Enhanced group trip count badge - FUTURE ONLY */
 .passenger-card.group-trip:not(.past-trip) .passenger-count {
   background-color: rgba(255, 255, 255, 0.4);
   font-weight: 900;
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
+/* Past trip count badge override */
 .passenger-card.past-trip .passenger-count {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.1) !important;
   font-weight: 600;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
 }
 
 .passenger-text {
@@ -209,10 +217,6 @@
     min-width: 1.5rem;
     max-width: 1.5rem;
     padding: 0.125rem;
-  }
-  
-  .passenger-card:has(.site-text) .passenger-content {
-    padding-right: 1.7rem;
   }
 }
 

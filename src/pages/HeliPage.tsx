@@ -739,6 +739,7 @@ const HeliPage = () => {
                                   type='incoming'
                                   confirmed={trip.confirmed}
                                   numberOfPassengers={trip.numberOfPassengers}
+                                  tripDate={trip.tripDate}
                                 />
                               </div>
                             ))}
@@ -782,6 +783,7 @@ const HeliPage = () => {
                                   type='outgoing'
                                   confirmed={trip.confirmed}
                                   numberOfPassengers={trip.numberOfPassengers}
+                                  tripDate={trip.tripDate}
                                 />
                               </div>
                             ))}
