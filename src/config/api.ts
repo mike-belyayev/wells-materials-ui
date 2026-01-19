@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
   // Trip endpoints
   TRIPS: `${API_BASE_URL}/api/trips`,
   TRIP_BY_ID: (id: string) => `${API_BASE_URL}/api/trips/${id}`,
+  TRIP_SORT: (id: string) => `${API_BASE_URL}/api/trips/${id}/sort`,
 };
 
 export default API_BASE_URL;

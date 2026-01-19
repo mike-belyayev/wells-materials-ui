@@ -20,8 +20,8 @@ import {
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import type { Passenger, Trip } from './HeliPage';
-import { API_ENDPOINTS } from '../config/api'; // Add this import
+import type { Passenger, Trip } from '../../types';
+import { API_ENDPOINTS } from '../../config/api';
 
 // Helper function to normalize dates (fix timezone issues)
 const normalizeDate = (dateString: string) => {
