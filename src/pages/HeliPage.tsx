@@ -1,10 +1,12 @@
 // src/pages/HeliPage.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { format, addWeeks, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
-import { AppBar, Toolbar } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Box, Button } from '@mui/material';
+import { Settings, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
+import LocationDropdown from '../components/HeliPage/LocationDropdown';
 import AddTripModal from '../components/HeliPage/AddTripModal';
 import EditTripModal from '../components/HeliPage/EditTripModal';
 import WeekView from '../components/HeliPage/WeekView';
@@ -238,10 +240,141 @@ const HeliPage = () => {
   
   return (
     <div className="dashboard-container">
-      {/* Header - same as before */}
-      <AppBar position="static" sx={{ backgroundColor: '#121212', color: 'white' }}>
-        <Toolbar sx={{ justifyContent: 'space-between', gap: 2, minHeight: '64px' }}>
-          {/* ... header content same as before ... */}
+      {/* Complete Header with Navigation Controls */}
+      <AppBar 
+        position="static" 
+        sx={{ 
+          backgroundColor: '#121212',
+          color: 'white',
+          backgroundImage: 'none',
+          boxShadow: 'none',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.12)'
+        }}
+      >
+        <Toolbar sx={{ 
+          justifyContent: 'space-between', 
+          gap: 2,
+          minHeight: '64px'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h6" component="h1" sx={{ fontWeight: 'bold' }}>
+              Helicopter Passengers
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              '& .MuiButton-root': {
+                color: 'white',
+                borderColor: 'rgba(255, 255, 255, 0.23)',
+                '&:hover': {
+                  borderColor: 'white'
+                }
+              },
+              '& .MuiIconButton-root': {
+                color: 'white'
+              }
+            }}>
+              <IconButton onClick={handlePrevWeek} size="small">
+                <ChevronLeft />
+              </IconButton>
+              
+              <Button 
+                variant="outlined" 
+                size="small" 
+                onClick={handleToday}
+                sx={{ textTransform: 'none' }}
+              >
+                Today
+              </Button>
+              
+              <Typography variant="body2" sx={{ 
+                minWidth: 150, 
+                textAlign: 'center',
+                color: 'rgba(255, 255, 255, 0.7)'
+              }}>
+                {getWeekRangeDisplay()}
+              </Typography>
+              
+              <IconButton onClick={handleNextWeek} size="small">
+                <ChevronRight />
+              </IconButton>
+            </Box>
+          </Box>
+
+          <Box sx={{ 
+            flex: 1, 
+            maxWidth: 200,
+            '& .MuiInputLabel-root': {
+              color: 'rgba(255, 255, 255, 0.7)'
+            },
+            '& .MuiOutlinedInput-root': {
+              color: 'white',
+              '& fieldset': {
+                borderColor: 'rgba(255, 255, 255, 0.23)'
+              },
+              '&:hover fieldset': {
+                borderColor: 'white'
+              }
+            },
+            '& .MuiSelect-icon': {
+              color: 'white'
+            }
+          }}>
+            <LocationDropdown 
+              currentLocation={currentLocation} 
+              onLocationChange={setCurrentLocation}
+              size="small"
+            />
+          </Box>
+
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            '& .MuiButton-root': {
+              color: 'white'
+            }
+          }}>
+            {isAdmin && (
+              <IconButton 
+                onClick={() => navigate('/admin')}
+                title="Admin Settings"
+                sx={{ 
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                  }
+                }}
+              >
+                <Settings />
+              </IconButton>
+            )}
+            
+            <Typography variant="body2" noWrap sx={{ 
+              maxWidth: 300,
+              color: 'white'
+            }}>
+              {user?.userName}
+              {isAdmin && " (admin)"}
+            </Typography>
+            
+            <Button 
+              variant="text" 
+              onClick={logout}
+              size="small"
+              sx={{ 
+                textTransform: 'none',
+                ml: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                }
+              }}
+            >
+              Logout
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
       
