@@ -48,11 +48,9 @@ const HeliPage = () => {
   const {
     draggedTrip,
     dragOverIndex,
-    isDragging,
     handleDragStart,
     handleDragOver,
     handleDragLeave,
-    handleDragEnd,
     handleDropReorder,
     handleDropMoveDate
   } = useDragAndDrop(isAdmin, user?.token, currentLocation, trips, setTrips, fetchData);
