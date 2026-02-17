@@ -27,7 +27,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { Close, Add, PersonAdd, SwapHoriz } from '@mui/icons-material';
-import type { Passenger } from './HeliPage';
+import type { Passenger } from '../../types';
 
 interface AddTripModalProps {
   isOpen: boolean;

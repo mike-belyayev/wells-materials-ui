@@ -1,0 +1,227 @@
+/* PassengerCard.css - Ensure past-trip overrides EVERYTHING */
+.passenger-card {
+  border-radius: 0.1875rem;
+  color: white;
+  box-shadow: 0 0.0625rem 0.0625rem rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-height: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: var(--card-height);
+  padding: var(--card-padding);
+  font-size: var(--compact-font-size);
+  margin-bottom: var(--spacing-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+.passenger-card:hover:not(.past-trip) {
+  transform: translateY(-0.0625rem);
+  box-shadow: 0 0.125rem 0.1875rem rgba(0,0,0,0.15);
+}
+
+/* Base colors for incoming/outgoing - FUTURE TRIPS */
+.passenger-card.incoming.confirmed {
+  background-color: #2e7d32; /* Green */
+}
+
+.passenger-card.outgoing.confirmed {
+  background-color: #1565c0; /* Blue */
+}
+
+.passenger-card.incoming.unconfirmed {
+  background-color: rgba(46, 125, 50, 0.6);
+}
+
+.passenger-card.outgoing.unconfirmed {
+  background-color: rgba(21, 101, 192, 0.6);
+}
+
+/* Group trip styling - FUTURE TRIPS ONLY */
+.passenger-card.group-trip.incoming.confirmed {
+  background: linear-gradient(135deg, #1b5e20 0%, #0d4016 100%);
+}
+
+.passenger-card.group-trip.outgoing.confirmed {
+  background: linear-gradient(135deg, #0d47a1 0%, #082b5c 100%);
+}
+
+.passenger-card.group-trip.incoming.unconfirmed {
+  background: linear-gradient(135deg, rgba(27, 94, 32, 0.8) 0%, rgba(13, 64, 22, 0.8) 100%);
+}
+
+.passenger-card.group-trip.outgoing.unconfirmed {
+  background: linear-gradient(135deg, rgba(13, 71, 161, 0.8) 0%, rgba(8, 43, 92, 0.8) 100%);
+}
+
+/* NEW: Site text styling - Right edge, black on white */
+.site-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-orientation: mixed;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #000000; /* Black text */
+  padding: 0 rem;
+  text-transform: uppercase;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff; /* White background */
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 1rem;
+  max-width: 1rem;
+}
+
+/* CRITICAL FIX: PAST TRIP STYLING - MUST OVERRIDE EVERYTHING */
+/* Using more specific selectors to ensure they win */
+.passenger-card.past-trip,
+.passenger-card.past-trip.incoming,
+.passenger-card.past-trip.outgoing,
+.passenger-card.past-trip.confirmed,
+.passenger-card.past-trip.unconfirmed,
+.passenger-card.past-trip.group-trip,
+.passenger-card.past-trip.group-trip.incoming,
+.passenger-card.past-trip.group-trip.outgoing,
+.passenger-card.past-trip.group-trip.confirmed,
+.passenger-card.past-trip.group-trip.unconfirmed {
+  background-color: #e0e0e0 !important; /* Light grey background */
+  color: #666 !important; /* Dark grey text */
+  background-image: none !important; /* Remove gradients */
+}
+
+.passenger-card.past-trip .passenger-name,
+.passenger-card.past-trip .passenger-job {
+  color: #666 !important;
+  text-shadow: none !important;
+}
+
+.passenger-card.past-trip .passenger-count {
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  color: #666 !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+.passenger-card.past-trip .site-text {
+  background-color: #f0f0f0 !important;
+  color: #888 !important;
+  border-left: 1px solid #ddd !important;
+}
+
+.passenger-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3125rem;
+  min-width: 0;
+  height: 100%;
+}
+
+.passenger-main-info {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.passenger-count {
+  font-size: 0.65rem;
+  font-weight: 800;
+  background-color: rgba(255, 255, 255, 0.25);
+  padding: 0.0625rem 0.1875rem;
+  border-radius: 0.125rem;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 1.2rem;
+}
+
+/* Enhanced group trip count badge - FUTURE ONLY */
+.passenger-card.group-trip:not(.past-trip) .passenger-count {
+  background-color: rgba(255, 255, 255, 0.4);
+  font-weight: 900;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Past trip count badge override */
+.passenger-card.past-trip .passenger-count {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+.passenger-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.passenger-name {
+  font-weight: 600;
+  font-size: calc(var(--compact-font-size) + 0.05rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
+  margin-bottom: 0;
+}
+
+.passenger-job {
+  font-size: calc(var(--compact-font-size) - 0.05rem);
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+  font-family: 'Brush Script MT', cursive, Arial, sans-serif;
+  line-height: 1;
+  margin-top: 0;
+}
+
+/* Compact layout for very small screens */
+@media (max-width: 48rem) {
+  .passenger-card {
+    height: 1.8rem;
+    max-height: 1.8rem;
+    padding: 0.125rem 0.25rem;
+  }
+  
+  .passenger-name {
+    font-size: 0.7rem;
+  }
+  
+  .passenger-job {
+    font-size: 0.55rem;
+  }
+  
+  .passenger-count {
+    font-size: 0.6rem;
+    padding: 0 0.125rem;
+    height: 1rem;
+  }
+  
+  .site-text {
+    font-size: 0.6rem;
+    min-width: 1.5rem;
+    max-width: 1.5rem;
+    padding: 0.125rem;
+  }
+}
+
+/* Ensure text is readable on all backgrounds */
+.passenger-card.group-trip:not(.past-trip) .passenger-name,
+.passenger-card.group-trip:not(.past-trip) .passenger-job {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}

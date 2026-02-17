@@ -1,12 +1,17 @@
 // ============================================
 // DEVELOPMENT - Local API
-// ============================================
+// =============================================
 // const API_BASE_URL = 'http://localhost:3000';
 
 // ============================================
 // PRODUCTION - Vercel API (UNCOMMENT FOR DEPLOYMENT)
 // ============================================
-const API_BASE_URL = 'https://wells-api.vercel.app';
+// const API_BASE_URL = 'https://wells-api.vercel.app';
+
+// ============================================
+// DEVELOPMENT - Vercel API (UNCOMMENT FOR PRODUCTION)
+// ============================================
+const API_BASE_URL = 'https://wells-api-dev.vercel.app';
 
 console.log('API Base URL:', API_BASE_URL);
 
@@ -36,6 +41,7 @@ export const API_ENDPOINTS = {
   // Trip endpoints
   TRIPS: `${API_BASE_URL}/api/trips`,
   TRIP_BY_ID: (id: string) => `${API_BASE_URL}/api/trips/${id}`,
+  TRIP_SORT: (id: string) => `${API_BASE_URL}/api/trips/${id}/sort`,
 };
 
 export default API_BASE_URL;

@@ -1,3 +1,4 @@
+/* HeliPage.css - Updated for 10-week view */
 .dashboard-container * {
   font-family: Arial, sans-serif;
 }
@@ -95,37 +96,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
+  font-size: 1rem;
   min-width: 0;
 }
 
-/* Week container takes all available space */
-.week-container {
-  display: grid;
-  grid-template-rows: repeat(2, 1fr);
-  overflow: auto;
-  height: 100%;
-  min-height: 0;
+/* CHANGED: Replace .week-container with .weeks-scroll-container for 10 weeks */
+.weeks-scroll-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: calc(100vh - 120px); /* Adjust based on your header heights */
+  display: flex;
+  flex-direction: column;
 }
 
-/* Week row grid - 7 equal columns */
+/* CHANGED: Week row now stacks vertically instead of 2-row grid */
 .week-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  min-height: clamp(180px, 220px + (100vw - 1920px) * 0.1, 280px);
-  height: 100%;
+  flex-shrink: 0;
+  min-height: fit-content;
+  height: auto;
   border-bottom: 1px solid #ddd;
 }
 
-/* Day column grid with heavier vertical borders */
+/* Day column with auto height */
 .day-column {
-  min-height: clamp(200px, 250px + (100vw - 1920px) * 0.1, 300px);
   display: grid;
   grid-template-rows: auto 1fr auto;
   border-right: 2px solid #b0b0b0;
   background-color: white;
   position: relative;
-  height: 100%;
+  height: auto;
+  min-height: 150px; /* Minimum height for empty days */
   min-width: 0;
 }
 
@@ -135,11 +137,11 @@
 }
 
 .date-header {
-  padding: 5px;
+  padding: 0.1rem;
   text-align: center;
   border-bottom: 1px solid #eee;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   background-color: #f8f9fa;
   height: 1.5rem;
   transition: all 0.3s ease;
@@ -159,7 +161,6 @@
 /* Horizontal layout for passenger lists */
 .passenger-lists {
   grid-row: 2;
-  height: 100%;
   overflow: hidden;
   min-height: 0;
 }
@@ -198,13 +199,12 @@
 }
 
 .pob-footer {
-  padding: 3px;
   text-align: center;
   border-top: 1px solid #eee;
   font-size: 0.75rem;
   background-color: #f8f9fa;
   font-weight: 500;
-  height: 1.5rem;
+  height: 1rem;
   transition: all 0.3s ease;
   flex-shrink: 0;
   position: relative;
@@ -362,21 +362,22 @@
   text-overflow: ellipsis;
 }
 
-.date-header,
-.pob-footer {
-  height: clamp(1.2rem, 1.5rem + (100vw - 1920px) * 0.02, 1.8rem);
-  font-size: var(--compact-font-size);
-  padding: var(--spacing-xs);
+/* Scrollbar for weeks container */
+.weeks-scroll-container::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* Week row hover effect for better visual separation */
-.week-row:hover .day-column {
-  background-color: #fafafa;
+.weeks-scroll-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-/* Ensure the entire page can scroll when content overflows */
-.dashboard-container {
-  overflow: auto;
+.weeks-scroll-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.weeks-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* Handle very narrow screens */
@@ -388,7 +389,7 @@
   
   .date-header,
   .pob-footer {
-    font-size: 0.7rem;
+    font-size: 1rem;
   }
 }
 
@@ -404,29 +405,7 @@
   font-style: italic;
 }
 
-/* Drag and drop improvements */
-.incoming-section.drop-target,
-.outgoing-section.drop-target {
-  background-color: rgba(255, 255, 0, 0.2);
-  border: 2px dashed #ffeb3b;
-}
-
-/* Ensure consistent heights across all days in a row */
-.week-row {
-  align-items: stretch;
-}
-
-.day-column {
-  align-self: stretch;
-}
-
 /* Make sure all grid areas fill available space */
-.week-container > * {
+.weeks-scroll-container > * {
   min-height: 0;
-}
-
-/* Fix for Firefox scrollbar */
-.passenger-cards-container {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.1);
 }
