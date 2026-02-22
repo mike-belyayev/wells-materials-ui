@@ -20,7 +20,7 @@ const EquipmentPage = () => {
 
   // State
   const [currentLocation, setCurrentLocation] = useState(user?.homeLocation || 'NSC');
-  const [setSites] = useState<Site[]>([]);
+  const [_sites, setSites] = useState<Site[]>([]);
   const [allWells, setAllWells] = useState<Well[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
