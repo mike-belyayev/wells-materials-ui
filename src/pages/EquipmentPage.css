@@ -141,7 +141,7 @@
   flex: 1;
   overflow: hidden;
   background-color: #e0e0e0;
-  gap: 2px;
+  gap: 1px; /* Even smaller gap */
   position: relative;
   width: 100%;
 }
@@ -156,30 +156,18 @@
   min-width: 0; /* Prevents overflow */
 }
 
-/* Professional vertical divider */
+/* Neutral grey divider - skinny and subtle */
 .wells-divider {
-  background-color: #2196f3 !important;
-  width: 3px !important;
+  background-color: #ccc !important;
+  width: 1px !important; /* Skinny */
   height: calc(100% - 20px) !important;
   align-self: center !important;
-  border-radius: 2px !important;
   flex-shrink: 0;
 }
 
-.active-well-section {
-  position: relative;
-}
-
+/* Remove the blue gradient line */
 .active-well-section::after {
-  content: '';
-  position: absolute;
-  right: -2px;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  background: linear-gradient(to bottom, #4caf50, #2196f3);
-  border-radius: 2px;
-  pointer-events: none;
+  display: none;
 }
 
 /* Well Header */
@@ -189,7 +177,7 @@
   align-items: center;
   padding: 8px 12px;
   background-color: white;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0; /* Lighter border */
   flex-shrink: 0;
   min-height: 48px;
   width: 100%;
