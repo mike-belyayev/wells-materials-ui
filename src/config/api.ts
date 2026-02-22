@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
   
   // Site endpoints
   SITES: `${API_BASE_URL}/api/sites`,
+  SITE_BY_NAME: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}`,
   SITE_POB: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}/pob`,
   INITIALIZE_SITES: `${API_BASE_URL}/api/sites/initialize`,
   
@@ -42,6 +43,19 @@ export const API_ENDPOINTS = {
   TRIPS: `${API_BASE_URL}/api/trips`,
   TRIP_BY_ID: (id: string) => `${API_BASE_URL}/api/trips/${id}`,
   TRIP_SORT: (id: string) => `${API_BASE_URL}/api/trips/${id}/sort`,
+  
+  // ===== NEW WELL ENDPOINTS =====
+  WELLS: `${API_BASE_URL}/api/wells`,
+  WELL_BY_ID: (id: string) => `${API_BASE_URL}/api/wells/${id}`,
+  WELL_BY_NAME: (wellName: string) => `${API_BASE_URL}/api/wells/name/${wellName}`,
+  WELLS_BY_OWNER: (wellOwner: string) => `${API_BASE_URL}/api/wells/owner/${wellOwner}`,
+  WELL_PHASES: (id: string) => `${API_BASE_URL}/api/wells/${id}/phases`,
+  WELLS_INITIALIZE: `${API_BASE_URL}/api/wells/initialize`,
+  
+  // ===== SITE-WELL ASSIGNMENT ENDPOINTS =====
+  SITE_ACTIVE_WELL: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}/active-well`,
+  SITE_NEXT_WELL: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}/next-well`,
+  SITE_WITH_WELLS: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}/with-wells`,
 };
 
 export default API_BASE_URL;

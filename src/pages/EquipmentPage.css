@@ -1,0 +1,287 @@
+/* EquipmentPage.css */
+.equipment-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+/* Header Styles */
+.equipment-header {
+  background-color: #121212 !important;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.header-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px !important;
+  padding: 0 16px !important;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.header-title {
+  font-weight: bold !important;
+  font-size: 1.1rem !important;
+  white-space: nowrap;
+}
+
+.column-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.column-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.column-control .MuiTypography-caption {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.7rem;
+}
+
+.column-select {
+  min-width: 60px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+  font-size: 0.8rem !important;
+}
+
+.column-select .MuiSelect-icon {
+  color: white;
+}
+
+.create-well-btn {
+  background-color: #4caf50 !important;
+  color: white !important;
+  text-transform: none !important;
+  font-size: 0.8rem !important;
+  padding: 4px 12px !important;
+  white-space: nowrap;
+}
+
+.header-center {
+  flex: 0 1 200px;
+  margin: 0 16px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.dev-credit {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 0.7rem !important;
+  white-space: nowrap;
+}
+
+.user-name {
+  color: white !important;
+  font-size: 0.85rem !important;
+  max-width: 200px;
+}
+
+.logout-btn {
+  color: white !important;
+  text-transform: none !important;
+  font-size: 0.8rem !important;
+  padding: 4px 8px !important;
+}
+
+/* Main Content - Split View */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+  overflow: hidden;
+  gap: 1px;
+  background-color: #ddd;
+}
+
+.well-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.active-well-section {
+  border-right: 2px solid #4caf50;
+}
+
+.next-well-section {
+  border-left: 2px solid #2196f3;
+}
+
+.well-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.well-title {
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.well-name {
+  font-size: 0.9rem;
+  font-weight: normal;
+  color: #666;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-well-btn {
+  text-transform: none !important;
+  font-size: 0.75rem !important;
+  padding: 2px 8px !important;
+  background-color: #f0f0f0 !important;
+}
+
+.empty-well-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-style: italic;
+  background-color: #fafafa;
+}
+
+/* Well Search Popover */
+.well-search-popover {
+  width: 300px;
+  padding: 8px;
+}
+
+.well-search-results {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.well-search-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #eee;
+}
+
+.well-search-item:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.well-search-name {
+  font-weight: 500 !important;
+}
+
+.well-search-afe {
+  color: #666;
+}
+
+.no-results {
+  padding: 16px;
+  text-align: center;
+  color: #999;
+}
+
+/* Loading/Error States */
+.loading-container,
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.1rem;
+}
+
+.error-container {
+  color: #d32f2f;
+}
+
+/* Scrollbar Styles */
+.main-content::-webkit-scrollbar,
+.well-search-results::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track,
+.well-search-results::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.main-content::-webkit-scrollbar-thumb,
+.well-search-results::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover,
+.well-search-results::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .header-left {
+    gap: 8px;
+  }
+  
+  .column-controls {
+    gap: 6px;
+  }
+  
+  .dev-credit {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  
+  .active-well-section {
+    border-right: none;
+    border-bottom: 2px solid #4caf50;
+  }
+  
+  .next-well-section {
+    border-left: none;
+    border-top: 2px solid #2196f3;
+  }
+}
