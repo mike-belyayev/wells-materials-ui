@@ -1,5 +1,5 @@
-// src/pages/EquipmentPage.tsx - Updated Header Section
-import { useState, useEffect, useCallback } from 'react';
+// src/pages/EquipmentPage.tsx
+import { useState, useEffect } from 'react';
 import { 
   AppBar, Toolbar, IconButton, Typography, Box, Button, 
   MenuItem, Select, TextField, Popover, FormControl, Divider
@@ -16,7 +16,7 @@ import EditPhaseModal from '../components/EquipmentPage/EditPhaseModal';
 import EditSubPhaseModal from '../components/EquipmentPage/EditSubPhaseModal';
 import EditItemModal from '../components/EquipmentPage/EditItemModal';
 import { API_ENDPOINTS } from '../config/api';
-import type { Well, Site, Item } from '../types';
+import type { Well, Item } from '../types';
 import './EquipmentPage.css';
 
 const EquipmentPage = () => {
@@ -24,21 +24,22 @@ const EquipmentPage = () => {
   const isAdmin = user?.isAdmin || false;
   const navigate = useNavigate();
 
+  // Get user's home location - this becomes the wellOwner/rig
+  const userRig = user?.homeLocation || 'NSC';
+  
   // State
-  const [currentLocation, setCurrentLocation] = useState(user?.homeLocation || 'NSC');
-  const [sites, setSites] = useState<Site[]>([]);
   const [allWells, setAllWells] = useState<Well[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Wells filtered by current location (owner) - exclude Ogle
-  const [locationWells, setLocationWells] = useState<Well[]>([]);
+  // Wells filtered by current user's rig (wellOwner)
+  const [userWells, setUserWells] = useState<Well[]>([]);
   
   // Active/Next well states
   const [activeWell, setActiveWell] = useState<Well | null>(null);
   const [nextWell, setNextWell] = useState<Well | null>(null);
   
-  // Column count states (1-4)
+  // Column count states
   const [activeWellColumns, setActiveWellColumns] = useState(2);
   const [nextWellColumns, setNextWellColumns] = useState(2);
   
@@ -63,22 +64,21 @@ const EquipmentPage = () => {
   const [wellSearchType, setWellSearchType] = useState<'active' | 'next' | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch sites and wells on mount
+  // Fetch wells on mount
   useEffect(() => {
-    fetchSites();
     fetchAllWells();
   }, []);
 
-  // Filter wells when location changes - exclude Ogle
+  // Filter wells when userRig changes or wells are loaded
   useEffect(() => {
-    if (currentLocation && allWells.length > 0) {
-      // Filter wells where wellOwner matches current site name and site is not Ogle
+    if (allWells.length > 0 && userRig) {
+      // Filter wells where wellOwner matches user's home location
       const filtered = allWells.filter(well => 
-        well.wellOwner.toLowerCase() === currentLocation.toLowerCase() &&
-        currentLocation !== 'Ogle' // Exclude Ogle
+        well.wellOwner.toLowerCase() === userRig.toLowerCase()
       );
-      setLocationWells(filtered);
+      setUserWells(filtered);
       
+      // Set active and next wells from filtered list
       if (filtered.length > 0) {
         setActiveWell(filtered[0]);
         if (filtered.length > 1) {
@@ -91,25 +91,7 @@ const EquipmentPage = () => {
         setNextWell(null);
       }
     }
-  }, [currentLocation, allWells]);
-
-  const fetchSites = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.SITES, {
-        headers: {
-          'Authorization': `Bearer ${user?.token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Filter out Ogle from sites
-        const filteredSites = data.filter((site: Site) => site.siteName !== 'Ogle');
-        setSites(filteredSites);
-      }
-    } catch (err) {
-      console.error('Failed to fetch sites:', err);
-    }
-  };
+  }, [allWells, userRig]);
 
   const fetchAllWells = async () => {
     try {
@@ -148,7 +130,7 @@ const EquipmentPage = () => {
         },
         body: JSON.stringify({
           ...wellData,
-          wellOwner: currentLocation
+          wellOwner: userRig // Automatically set owner to user's rig
         })
       });
 
@@ -172,6 +154,7 @@ const EquipmentPage = () => {
         },
         body: JSON.stringify({ phaseName })
       });
+
       if (response.ok) {
         const updatedWell = await response.json();
         setAllWells(prev => prev.map(w => w._id === wellId ? updatedWell : w));
@@ -417,7 +400,7 @@ const EquipmentPage = () => {
   };
 
   // Filter wells for search
-  const filteredWells = locationWells.filter(well => 
+  const filteredWells = userWells.filter(well => 
     well.wellName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     well.wellAFE.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -432,26 +415,8 @@ const EquipmentPage = () => {
         <Toolbar className="header-toolbar">
           <Box className="header-left">
             <Typography variant="h6" className="header-title">
-              Wells Equipment List
+              Wells Equipment List - {userRig}
             </Typography>
-            
-            {/* Location/Rig selector */}
-            <Box className="location-selector">
-              <Typography variant="body2" className="rig-label">Rig:</Typography>
-              <FormControl size="small" className="rig-select">
-                <Select
-                  value={currentLocation}
-                  onChange={(e) => setCurrentLocation(e.target.value)}
-                  displayEmpty
-                >
-                  {sites.map((site) => (
-                    <MenuItem key={site.siteName} value={site.siteName}>
-                      {site.siteName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
 
             {/* Create Well Button */}
             {isAdmin && (
@@ -493,7 +458,7 @@ const EquipmentPage = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Main Content - Split View with Divider */}
+      {/* Main Content - Split View */}
       <Box className="main-content">
         {/* Active Well Section */}
         <Box className="well-section active-well-section">
@@ -524,7 +489,7 @@ const EquipmentPage = () => {
                   setSearchTerm('');
                 }}
                 className="assign-well-btn"
-                disabled={locationWells.length === 0}
+                disabled={userWells.length === 0}
               >
                 {activeWell ? 'Change' : 'Assign Well'}
               </Button>
@@ -593,8 +558,8 @@ const EquipmentPage = () => {
             />
           ) : (
             <Box className="empty-well-message">
-              <Typography>No active well assigned for {currentLocation}</Typography>
-              {locationWells.length === 0 && (
+              <Typography>No active well assigned for {userRig}</Typography>
+              {userWells.length === 0 && (
                 <Typography variant="caption" sx={{ mt: 1, color: '#999' }}>
                   Create a new well first
                 </Typography>
@@ -635,7 +600,7 @@ const EquipmentPage = () => {
                   setSearchTerm('');
                 }}
                 className="assign-well-btn"
-                disabled={locationWells.length === 0}
+                disabled={userWells.length === 0}
               >
                 {nextWell ? 'Change' : 'Assign Well'}
               </Button>
@@ -704,7 +669,7 @@ const EquipmentPage = () => {
             />
           ) : (
             <Box className="empty-well-message">
-              <Typography>No next well assigned for {currentLocation}</Typography>
+              <Typography>No next well assigned for {userRig}</Typography>
             </Box>
           )}
         </Box>
@@ -744,7 +709,7 @@ const EquipmentPage = () => {
               ))
             ) : (
               <Typography variant="body2" className="no-results">
-                No wells found for {currentLocation}
+                No wells found for {userRig}
               </Typography>
             )}
           </Box>
@@ -756,7 +721,7 @@ const EquipmentPage = () => {
         isOpen={createWellModalOpen}
         onClose={() => setCreateWellModalOpen(false)}
         onSubmit={handleCreateWell}
-        currentLocation={currentLocation}
+        currentLocation={userRig}
       />
 
       <AddPhaseModal

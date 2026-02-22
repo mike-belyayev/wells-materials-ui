@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // Add Navigate
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Add Navigate
 import { AuthProvider } from './auth/AuthContext';
 import { ProtectedRoute, AdminRoute } from './auth/ProtectedRoute';
 import HomePage from './pages/HomePage';
