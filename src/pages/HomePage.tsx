@@ -53,7 +53,7 @@ const HomePage = () => {
           color: 'primary.main', 
           fontWeight: 600 
         }}>
-          Wells Materials Management
+          Wells Equipment Management
         </Typography>
         
         {error && (
