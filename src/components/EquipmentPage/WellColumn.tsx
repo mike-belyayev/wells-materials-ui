@@ -34,10 +34,10 @@ const WellColumn: React.FC<WellColumnProps> = ({
 }) => {
   const [expandedItems, setExpandedItems] = useState<{[key: string]: boolean}>({});
 
-  const toggleItem = (itemId: string) => {
+  const toggleItem = (itemKey: string) => {
     setExpandedItems(prev => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [itemKey]: !prev[itemKey]
     }));
   };
 
@@ -49,6 +49,36 @@ const WellColumn: React.FC<WellColumnProps> = ({
       case 3: return 'three-columns';
       case 4: return 'four-columns';
       default: return 'two-columns';
+    }
+  };
+
+  // Get status colors based on item state
+  const getStatusColors = (status?: string) => {
+    switch(status) {
+      case 'green':
+        return {
+          background: 'rgba(76, 175, 80, 0.15)',
+          text: '#2e7d32',
+          border: 'rgba(76, 175, 80, 0.3)'
+        };
+      case 'orange':
+        return {
+          background: 'rgba(255, 152, 0, 0.15)',
+          text: '#c43e00',
+          border: 'rgba(255, 152, 0, 0.3)'
+        };
+      case 'red':
+        return {
+          background: 'rgba(244, 67, 54, 0.15)',
+          text: '#b71c1c',
+          border: 'rgba(244, 67, 54, 0.3)'
+        };
+      default:
+        return {
+          background: 'transparent',
+          text: 'inherit',
+          border: 'none'
+        };
     }
   };
 
@@ -156,68 +186,115 @@ const WellColumn: React.FC<WellColumnProps> = ({
 
                   {/* Items */}
                   <Box className="items-container">
-                    {subPhase.items?.map((item, itemIndex) => (
-                      <Box key={itemIndex} className="item-card">
-                        <Box 
-                          className="item-content" 
-                          onClick={() => toggleItem(`${phaseIndex}-${subPhaseIndex}-${itemIndex}`)}
-                        >
-                          {item.itemQuantity && (
-                            <Typography variant="caption" className="item-quantity">
-                              {item.itemQuantity}
-                            </Typography>
-                          )}
-                          
-                          <Typography 
-                            variant="body2" 
-                            className={`item-name ${expandedItems[`${phaseIndex}-${subPhaseIndex}-${itemIndex}`] ? 'expanded' : ''}`}
-                          >
-                            {item.itemName}
-                          </Typography>
-
-                          {item.itemLocation && (
-                            <Typography variant="caption" className="item-location">
-                              {item.itemLocation}
-                            </Typography>
-                          )}
-
-                          {/* Edit button for item */}
-                          {isAdmin && (
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditItem(well, phaseIndex, subPhaseIndex, itemIndex, item);
-                              }}
-                              className="item-edit-btn"
-                              title="Edit Item"
+                    {subPhase.items?.map((item, itemIndex) => {
+                      const itemKey = `${phaseIndex}-${subPhaseIndex}-${itemIndex}`;
+                      const isExpanded = expandedItems[itemKey];
+                      const statusColors = getStatusColors(item.itemState);
+                      
+                      return (
+                        <Box key={itemIndex} className="item-card">
+                          {!isExpanded ? (
+                            /* Collapsed view - horizontal layout */
+                            <Box 
+                              className="item-content collapsed"
+                              onClick={() => toggleItem(itemKey)}
+                              sx={{ backgroundColor: statusColors.background }}
                             >
-                              <Edit fontSize="small" />
-                            </IconButton>
+                              {item.itemQuantity && (
+                                <Typography variant="caption" className="item-quantity">
+                                  {item.itemQuantity}
+                                </Typography>
+                              )}
+                              
+                              <Typography 
+                                variant="body2" 
+                                className="item-name"
+                                sx={{ color: statusColors.text }}
+                              >
+                                {item.itemName}
+                              </Typography>
+
+                              {item.itemLocation && (
+                                <Typography variant="caption" className="item-location">
+                                  {item.itemLocation}
+                                </Typography>
+                              )}
+
+                              {/* Edit button */}
+                              {isAdmin && (
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditItem(well, phaseIndex, subPhaseIndex, itemIndex, item);
+                                  }}
+                                  className="item-edit-btn"
+                                  title="Edit Item"
+                                >
+                                  <Edit fontSize="small" />
+                                </IconButton>
+                              )}
+                            </Box>
+                          ) : (
+                            /* Expanded view - vertical layout */
+                            <Box 
+                              className="item-content expanded"
+                              onClick={() => toggleItem(itemKey)}
+                              sx={{ backgroundColor: statusColors.background }}
+                            >
+                              {/* Top row: Quantity only */}
+                              <Box className="item-expanded-top">
+                                {item.itemQuantity && (
+                                  <Typography variant="caption" className="item-expanded-quantity">
+                                    Quantity: {item.itemQuantity}
+                                  </Typography>
+                                )}
+                                
+                                {/* Edit button moved to top right */}
+                                {isAdmin && (
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onEditItem(well, phaseIndex, subPhaseIndex, itemIndex, item);
+                                    }}
+                                    className="item-expanded-edit-btn"
+                                    title="Edit Item"
+                                  >
+                                    <Edit fontSize="small" />
+                                  </IconButton>
+                                )}
+                              </Box>
+
+                              {/* Item Name - full width, left aligned */}
+                              <Typography 
+                                variant="body2" 
+                                className="item-expanded-name"
+                                sx={{ color: statusColors.text }}
+                              >
+                                {item.itemName}
+                              </Typography>
+
+                              {/* Description - grey cursive */}
+                              {item.itemDescription && (
+                                <Typography variant="caption" className="item-expanded-description">
+                                  {item.itemDescription}
+                                </Typography>
+                              )}
+
+                              {/* Bottom row: Location */}
+                              {item.itemLocation && (
+                                <Box className="item-expanded-bottom">
+                                  <Typography variant="caption" className="item-expanded-location">
+                                    <strong>Location:</strong> {item.itemLocation}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
                           )}
                         </Box>
-
-                        {expandedItems[`${phaseIndex}-${subPhaseIndex}-${itemIndex}`] && (
-                          <Box className="item-details">
-                            {item.itemDescription && (
-                              <Typography variant="caption" className="item-description">
-                                {item.itemDescription}
-                              </Typography>
-                            )}
-                            {item.itemState && (
-                              <Typography variant="caption" className="item-state">
-                                State: {item.itemState}
-                              </Typography>
-                            )}
-                            {item.itemComment && (
-                              <Typography variant="caption" className="item-comment">
-                                Note: {item.itemComment}
-                              </Typography>
-                            )}
-                          </Box>
-                        )}
-                      </Box>
-                    ))}
+                      );
+                    })}
                   </Box>
                 </Box>
               ))}
@@ -225,6 +302,16 @@ const WellColumn: React.FC<WellColumnProps> = ({
           </Box>
         ))}
       </Box>
+
+      {/* Add Phase Button */}
+      {isAdmin && (
+        <Box className="add-phase-container">
+          <IconButton onClick={() => onAddPhase(well)} className="add-phase-btn">
+            <Add />
+          </IconButton>
+          <Typography variant="caption">Add Phase</Typography>
+        </Box>
+      )}
     </Box>
   );
 };

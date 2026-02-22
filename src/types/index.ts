@@ -41,13 +41,15 @@ export type TripType = 'incoming' | 'outgoing';
 
 // ========== New Equipment/Well Types ==========
 
+export type ItemStatus = 'neutral' | 'green' | 'orange' | 'red';
+
 export interface Item {
-  _id?: string;  // Optional as new items might not have ID yet
+  _id?: string;
   itemName: string;
   itemQuantity?: string;
   itemDescription?: string;
   itemLocation?: string;
-  itemState?: string;
+  itemState?: ItemStatus;  // Make sure this is only declared once
   itemComment?: string;
 }
 
@@ -75,8 +77,8 @@ export interface Well {
 
 // ========== Extended Site Type (with well references) ==========
 export interface SiteWithWells extends Site {
-  activeWell?: Well | string | null;  // Can be populated Well object or just ID
-  nextWell?: Well | string | null;     // Can be populated Well object or just ID
+  activeWell?: Well | string | null;
+  nextWell?: Well | string | null;
 }
 
 // ========== API Request/Response Types for Wells ==========
@@ -102,7 +104,7 @@ export interface AddItemRequest {
   itemQuantity?: string;
   itemDescription?: string;
   itemLocation?: string;
-  itemState?: string;
+  itemState?: ItemStatus;  // Updated to use ItemStatus
   itemComment?: string;
 }
 

@@ -9,9 +9,14 @@ import {
   Button,
   Box,
   Typography,
-  Grid
+  Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel
 } from '@mui/material';
-import type { Well, Item } from '../../types';
+import type { SelectChangeEvent } from '@mui/material';
+import type { Well, Item, ItemStatus } from '../../types';
 
 interface EditItemModalProps {
   isOpen: boolean;
@@ -26,6 +31,13 @@ interface EditItemModalProps {
   onSubmit: (wellId: string, phaseIndex: number, subPhaseIndex: number, itemIndex: number, itemData: any) => void;
 }
 
+const statusOptions = [
+  { value: 'neutral', label: 'Neutral', color: '#757575' },
+  { value: 'green', label: 'Green', color: '#4caf50' },
+  { value: 'orange', label: 'Orange', color: '#ff9800' },
+  { value: 'red', label: 'Red', color: '#f44336' }
+];
+
 const EditItemModal: React.FC<EditItemModalProps> = ({
   isOpen,
   onClose,
@@ -37,7 +49,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     itemQuantity: '',
     itemDescription: '',
     itemLocation: '',
-    itemState: '',
+    itemState: 'neutral' as ItemStatus,
     itemComment: ''
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
@@ -49,7 +61,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         itemQuantity: itemInfo.item.itemQuantity || '',
         itemDescription: itemInfo.item.itemDescription || '',
         itemLocation: itemInfo.item.itemLocation || '',
-        itemState: itemInfo.item.itemState || '',
+        itemState: itemInfo.item.itemState || 'neutral',
         itemComment: itemInfo.item.itemComment || ''
       });
     }
@@ -61,6 +73,10 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleStatusChange = (e: SelectChangeEvent) => {
+    setFormData(prev => ({ ...prev, itemState: e.target.value as ItemStatus }));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -168,16 +184,30 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
             </Grid>
 
             <Grid size={{ xs: 6 }}>
-              <TextField
-                name="itemState"
-                label="State/Status"
-                value={formData.itemState}
-                onChange={handleChange}
-                onKeyPress={handleKeyPress}
-                fullWidth
-                size="small"
-                placeholder="e.g., Ordered, In transit, On site"
-              />
+              <FormControl fullWidth size="small">
+                <InputLabel id="status-label">Status</InputLabel>
+                <Select
+                  labelId="status-label"
+                  name="itemState"
+                  value={formData.itemState}
+                  onChange={handleStatusChange}
+                  label="Status"
+                >
+                  {statusOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ 
+                          width: 12, 
+                          height: 12, 
+                          borderRadius: '50%', 
+                          backgroundColor: option.color 
+                        }} />
+                        {option.label}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
 
             <Grid size={{ xs: 6 }}>

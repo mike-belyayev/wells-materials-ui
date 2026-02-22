@@ -172,7 +172,6 @@ const EquipmentPage = () => {
         },
         body: JSON.stringify({ phaseName })
       });
-
       if (response.ok) {
         const updatedWell = await response.json();
         setAllWells(prev => prev.map(w => w._id === wellId ? updatedWell : w));

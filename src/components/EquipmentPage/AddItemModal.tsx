@@ -9,9 +9,14 @@ import {
   Button,
   Box,
   Typography,
-  Grid
+  Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel
 } from '@mui/material';
-import type { Well } from '../../types';
+import type { SelectChangeEvent } from '@mui/material';
+import type { Well, ItemStatus } from '../../types';
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -24,6 +29,13 @@ interface AddItemModalProps {
   onSubmit: (wellId: string, phaseIndex: number, subPhaseIndex: number, itemData: any) => void;
 }
 
+const statusOptions = [
+  { value: 'neutral', label: 'Neutral', color: '#757575' },
+  { value: 'green', label: 'Green', color: '#4caf50' },
+  { value: 'orange', label: 'Orange', color: '#ff9800' },
+  { value: 'red', label: 'Red', color: '#f44336' }
+];
+
 const AddItemModal: React.FC<AddItemModalProps> = ({
   isOpen,
   onClose,
@@ -35,7 +47,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
     itemQuantity: '',
     itemDescription: '',
     itemLocation: '',
-    itemState: '',
+    itemState: 'neutral' as ItemStatus,
     itemComment: ''
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
@@ -45,6 +57,16 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleStatusChange = (e: SelectChangeEvent) => {
+    setFormData(prev => ({ ...prev, itemState: e.target.value as ItemStatus }));
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type !== 'textarea') {
+      handleSubmit();
     }
   };
 
@@ -76,7 +98,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
         itemQuantity: '',
         itemDescription: '',
         itemLocation: '',
-        itemState: '',
+        itemState: 'neutral',
         itemComment: ''
       });
       setErrors({});
@@ -89,7 +111,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       itemQuantity: '',
       itemDescription: '',
       itemLocation: '',
-      itemState: '',
+      itemState: 'neutral',
       itemComment: ''
     });
     setErrors({});
@@ -120,6 +142,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 label="Item Name *"
                 value={formData.itemName}
                 onChange={handleChange}
+                onKeyPress={handleKeyPress}
                 error={!!errors.itemName}
                 helperText={errors.itemName}
                 fullWidth
@@ -135,6 +158,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 label="Quantity"
                 value={formData.itemQuantity}
                 onChange={handleChange}
+                onKeyPress={handleKeyPress}
                 fullWidth
                 size="small"
                 placeholder="e.g., 5, 100m, 2 sets"
@@ -147,6 +171,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 label="Location"
                 value={formData.itemLocation}
                 onChange={handleChange}
+                onKeyPress={handleKeyPress}
                 fullWidth
                 size="small"
                 placeholder="e.g., Warehouse A, Site B"
@@ -168,15 +193,30 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             </Grid>
 
             <Grid size={{ xs: 6 }}>
-              <TextField
-                name="itemState"
-                label="State/Status"
-                value={formData.itemState}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-                placeholder="e.g., Ordered, In transit, On site"
-              />
+              <FormControl fullWidth size="small">
+                <InputLabel id="status-label">Status</InputLabel>
+                <Select
+                  labelId="status-label"
+                  name="itemState"
+                  value={formData.itemState}
+                  onChange={handleStatusChange}
+                  label="Status"
+                >
+                  {statusOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ 
+                          width: 12, 
+                          height: 12, 
+                          borderRadius: '50%', 
+                          backgroundColor: option.color 
+                        }} />
+                        {option.label}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
 
             <Grid size={{ xs: 6 }}>
@@ -185,6 +225,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 label="Comments"
                 value={formData.itemComment}
                 onChange={handleChange}
+                onKeyPress={handleKeyPress}
                 fullWidth
                 size="small"
                 placeholder="Additional notes"
