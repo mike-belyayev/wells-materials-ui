@@ -1,9 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // Add Navigate
 import { AuthProvider } from './auth/AuthContext';
 import { ProtectedRoute, AdminRoute } from './auth/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import HeliPage from './pages/HeliPage';
-import EquipmentPage from './pages/EquipmentPage'; // Import new EquipmentPage
+import EquipmentPage from './pages/EquipmentPage';
 import AdminPage from './pages/AdminPage';
 
 function App() {
@@ -13,14 +13,14 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           
-          {/* Original Heli Page (keep for now until fully migrated) */}
+          {/* Original Heli Page - keep accessible but not default */}
           <Route path="/heli" element={
             <ProtectedRoute>
               <HeliPage />
             </ProtectedRoute>
           } />
           
-          {/* NEW Equipment Page */}
+          {/* Equipment Page - now the main/default after login */}
           <Route path="/equipment" element={
             <ProtectedRoute>
               <EquipmentPage />
@@ -33,8 +33,8 @@ function App() {
             </AdminRoute>
           } />
           
-          {/* Optional: Redirect / to equipment if you want it as default after login */}
-          {/* <Route path="/" element={<Navigate to="/equipment" replace />} /> */}
+          {/* Add redirect from root to equipment for authenticated users */}
+          <Route path="/" element={<HomePage />} />
         </Routes>
       </AuthProvider>
     </Router>

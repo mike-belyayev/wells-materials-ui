@@ -1,15 +1,21 @@
 // src/components/EquipmentPage/WellColumn.tsx
 import { useState } from 'react';
-import { Box, Typography, IconButton, Collapse } from '@mui/material';
-import { Add, ExpandMore, ExpandLess } from '@mui/icons-material';
-import type { Well } from '../../types';
+import { Box, Typography, IconButton } from '@mui/material';
+import { Add, ArrowUpward, ArrowDownward, Edit } from '@mui/icons-material';
+import type { Well, Item } from '../../types';
 import './WellColumn.css';
 
 interface WellColumnProps {
   well: Well;
   columnCount: number;
   onAddPhase: (well: Well) => void;
+  onAddSubPhase: (well: Well, phaseIndex: number) => void;
   onAddItem: (well: Well, phaseIndex: number, subPhaseIndex: number) => void;
+  onEditPhase: (well: Well, phaseIndex: number, phaseName: string) => void;
+  onEditSubPhase: (well: Well, phaseIndex: number, subPhaseIndex: number, subPhaseName: string) => void;
+  onEditItem: (well: Well, phaseIndex: number, subPhaseIndex: number, itemIndex: number, item: Item) => void;
+  onMovePhase: (well: Well, phaseIndex: number, direction: 'up' | 'down') => void;
+  onMoveSubPhase: (well: Well, phaseIndex: number, subPhaseIndex: number, direction: 'up' | 'down') => void;
   isAdmin: boolean;
 }
 
@@ -17,27 +23,16 @@ const WellColumn: React.FC<WellColumnProps> = ({
   well,
   columnCount,
   onAddPhase,
+  onAddSubPhase,
   onAddItem,
+  onEditPhase,
+  onEditSubPhase,
+  onEditItem,
+  onMovePhase,
+  onMoveSubPhase,
   isAdmin
 }) => {
-  const [expandedPhases, setExpandedPhases] = useState<{[key: string]: boolean}>({});
-  const [expandedSubPhases, setExpandedSubPhases] = useState<{[key: string]: boolean}>({});
   const [expandedItems, setExpandedItems] = useState<{[key: string]: boolean}>({});
-
-  const togglePhase = (phaseIndex: number) => {
-    setExpandedPhases(prev => ({
-      ...prev,
-      [phaseIndex]: !prev[phaseIndex]
-    }));
-  };
-
-  const toggleSubPhase = (phaseIndex: number, subPhaseIndex: number) => {
-    const key = `${phaseIndex}-${subPhaseIndex}`;
-    setExpandedSubPhases(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
 
   const toggleItem = (itemId: string) => {
     setExpandedItems(prev => ({
@@ -59,128 +54,177 @@ const WellColumn: React.FC<WellColumnProps> = ({
 
   return (
     <Box className="well-column">
-      {/* Well Info Bar */}
-      <Box className="well-info-bar">
-        <Typography variant="caption" className="well-afe">
-          AFE: {well.wellAFE}
-        </Typography>
-        <Typography variant="caption" className="well-owner">
-          Owner: {well.wellOwner}
-        </Typography>
-      </Box>
-
       {/* Phases Container with dynamic columns */}
       <Box className={`phases-container ${getGridClass()}`}>
         {well.wellPhases?.map((phase, phaseIndex) => (
           <Box key={phaseIndex} className="phase-card">
-            <Box className="phase-header" onClick={() => togglePhase(phaseIndex)}>
+            <Box className="phase-header">
               <Typography variant="subtitle2" className="phase-name">
                 {phase.phaseName}
               </Typography>
-              <IconButton size="small" className="expand-btn">
-                {expandedPhases[phaseIndex] ? <ExpandLess /> : <ExpandMore />}
-              </IconButton>
+              
+              {/* Phase controls */}
+              {isAdmin && (
+                <Box className="phase-controls">
+                  <IconButton 
+                    size="small" 
+                    onClick={() => onEditPhase(well, phaseIndex, phase.phaseName)}
+                    className="edit-btn"
+                    title="Edit Phase"
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => onMovePhase(well, phaseIndex, 'up')}
+                    disabled={phaseIndex === 0}
+                    className="move-btn"
+                    title="Move Up"
+                  >
+                    <ArrowUpward fontSize="small" />
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => onMovePhase(well, phaseIndex, 'down')}
+                    disabled={phaseIndex === well.wellPhases.length - 1}
+                    className="move-btn"
+                    title="Move Down"
+                  >
+                    <ArrowDownward fontSize="small" />
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => onAddSubPhase(well, phaseIndex)}
+                    className="add-subphase-btn"
+                    title="Add Subphase"
+                  >
+                    <Add fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
             </Box>
 
-            <Collapse in={expandedPhases[phaseIndex] !== false}>
-              <Box className="subphases-container">
-                {phase.subPhases?.map((subPhase, subPhaseIndex) => (
-                  <Box key={subPhaseIndex} className="subphase-card">
-                    <Box 
-                      className="subphase-header" 
-                      onClick={() => toggleSubPhase(phaseIndex, subPhaseIndex)}
-                    >
-                      <Typography variant="body2" className="subphase-name">
-                        {subPhase.subPhaseName}
-                      </Typography>
-                      <IconButton size="small" className="expand-btn">
-                        {expandedSubPhases[`${phaseIndex}-${subPhaseIndex}`] ? 
-                          <ExpandLess /> : <ExpandMore />}
-                      </IconButton>
-                    </Box>
+            {/* Subphases - always expanded */}
+            <Box className="subphases-container">
+              {phase.subPhases?.map((subPhase, subPhaseIndex) => (
+                <Box key={subPhaseIndex} className="subphase-card">
+                  <Box className="subphase-header">
+                    <Typography variant="body2" className="subphase-name">
+                      {subPhase.subPhaseName}
+                    </Typography>
+                    
+                    {/* Subphase controls */}
+                    {isAdmin && (
+                      <Box className="subphase-controls">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => onEditSubPhase(well, phaseIndex, subPhaseIndex, subPhase.subPhaseName)}
+                          className="edit-btn"
+                          title="Edit Subphase"
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => onMoveSubPhase(well, phaseIndex, subPhaseIndex, 'up')}
+                          disabled={subPhaseIndex === 0}
+                          className="move-btn"
+                          title="Move Up"
+                        >
+                          <ArrowUpward fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => onMoveSubPhase(well, phaseIndex, subPhaseIndex, 'down')}
+                          disabled={subPhaseIndex === phase.subPhases.length - 1}
+                          className="move-btn"
+                          title="Move Down"
+                        >
+                          <ArrowDownward fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => onAddItem(well, phaseIndex, subPhaseIndex)}
+                          className="add-item-btn"
+                          title="Add Item"
+                        >
+                          <Add fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Box>
 
-                    <Collapse in={expandedSubPhases[`${phaseIndex}-${subPhaseIndex}`] !== false}>
-                      <Box className="items-container">
-                        {subPhase.items?.map((item, itemIndex) => (
-                          <Box key={itemIndex} className="item-card">
-                            <Box 
-                              className="item-content" 
-                              onClick={() => toggleItem(`${phaseIndex}-${subPhaseIndex}-${itemIndex}`)}
-                            >
-                              {item.itemQuantity && (
-                                <Typography variant="caption" className="item-quantity">
-                                  {item.itemQuantity}
-                                </Typography>
-                              )}
-                              
-                              <Typography 
-                                variant="body2" 
-                                className={`item-name ${expandedItems[`${phaseIndex}-${subPhaseIndex}-${itemIndex}`] ? 'expanded' : ''}`}
-                              >
-                                {item.itemName}
-                                {expandedItems[`${phaseIndex}-${subPhaseIndex}-${itemIndex}`] && (
-                                  <span className="item-description">
-                                    {item.itemDescription}
-                                  </span>
-                                )}
-                              </Typography>
+                  {/* Items */}
+                  <Box className="items-container">
+                    {subPhase.items?.map((item, itemIndex) => (
+                      <Box key={itemIndex} className="item-card">
+                        <Box 
+                          className="item-content" 
+                          onClick={() => toggleItem(`${phaseIndex}-${subPhaseIndex}-${itemIndex}`)}
+                        >
+                          {item.itemQuantity && (
+                            <Typography variant="caption" className="item-quantity">
+                              {item.itemQuantity}
+                            </Typography>
+                          )}
+                          
+                          <Typography 
+                            variant="body2" 
+                            className={`item-name ${expandedItems[`${phaseIndex}-${subPhaseIndex}-${itemIndex}`] ? 'expanded' : ''}`}
+                          >
+                            {item.itemName}
+                          </Typography>
 
-                              {item.itemLocation && (
-                                <Typography variant="caption" className="item-location">
-                                  {item.itemLocation}
-                                </Typography>
-                              )}
-                            </Box>
+                          {item.itemLocation && (
+                            <Typography variant="caption" className="item-location">
+                              {item.itemLocation}
+                            </Typography>
+                          )}
 
-                            {expandedItems[`${phaseIndex}-${subPhaseIndex}-${itemIndex}`] && (
-                              <Box className="item-details">
-                                {item.itemState && (
-                                  <Typography variant="caption" className="item-state">
-                                    State: {item.itemState}
-                                  </Typography>
-                                )}
-                                {item.itemComment && (
-                                  <Typography variant="caption" className="item-comment">
-                                    Note: {item.itemComment}
-                                  </Typography>
-                                )}
-                              </Box>
-                            )}
-                          </Box>
-                        ))}
-
-                        {/* Add Item Button */}
-                        {isAdmin && (
-                          <Box className="add-item-container">
+                          {/* Edit button for item */}
+                          {isAdmin && (
                             <IconButton
                               size="small"
-                              onClick={() => onAddItem(well, phaseIndex, subPhaseIndex)}
-                              className="add-item-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditItem(well, phaseIndex, subPhaseIndex, itemIndex, item);
+                              }}
+                              className="item-edit-btn"
+                              title="Edit Item"
                             >
-                              <Add fontSize="small" />
+                              <Edit fontSize="small" />
                             </IconButton>
-                            <Typography variant="caption">Add Item</Typography>
+                          )}
+                        </Box>
+
+                        {expandedItems[`${phaseIndex}-${subPhaseIndex}-${itemIndex}`] && (
+                          <Box className="item-details">
+                            {item.itemDescription && (
+                              <Typography variant="caption" className="item-description">
+                                {item.itemDescription}
+                              </Typography>
+                            )}
+                            {item.itemState && (
+                              <Typography variant="caption" className="item-state">
+                                State: {item.itemState}
+                              </Typography>
+                            )}
+                            {item.itemComment && (
+                              <Typography variant="caption" className="item-comment">
+                                Note: {item.itemComment}
+                              </Typography>
+                            )}
                           </Box>
                         )}
                       </Box>
-                    </Collapse>
+                    ))}
                   </Box>
-                ))}
-              </Box>
-            </Collapse>
+                </Box>
+              ))}
+            </Box>
           </Box>
         ))}
       </Box>
-
-      {/* Add Phase Button */}
-      {isAdmin && (
-        <Box className="add-phase-container">
-          <IconButton onClick={() => onAddPhase(well)} className="add-phase-btn">
-            <Add />
-          </IconButton>
-          <Typography variant="caption">Add Phase</Typography>
-        </Box>
-      )}
     </Box>
   );
 };

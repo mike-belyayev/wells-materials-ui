@@ -1,4 +1,4 @@
-// src/components/EquipmentPage/AddPhaseModal.tsx
+// src/components/EquipmentPage/AddSubPhaseModal.tsx
 import { useState } from 'react';
 import {
   Dialog,
@@ -12,31 +12,34 @@ import {
 } from '@mui/material';
 import type { Well } from '../../types';
 
-interface AddPhaseModalProps {
+interface AddSubPhaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  well: Well | null;
-  onSubmit: (wellId: string, phaseName: string) => void;
+  phaseInfo: {
+    well: Well;
+    phaseIndex: number;
+  } | null;
+  onSubmit: (wellId: string, phaseIndex: number, subPhaseName: string) => void;
 }
 
-const AddPhaseModal: React.FC<AddPhaseModalProps> = ({
+const AddSubPhaseModal: React.FC<AddSubPhaseModalProps> = ({
   isOpen,
   onClose,
-  well,
+  phaseInfo,
   onSubmit
 }) => {
-  const [phaseName, setPhaseName] = useState('');
+  const [subPhaseName, setSubPhaseName] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = () => {
-    if (!phaseName.trim()) {
-      setError('Phase name is required');
+    if (!subPhaseName.trim()) {
+      setError('Subphase name is required');
       return;
     }
     
-    if (well) {
-      onSubmit(well._id, phaseName.trim());
-      setPhaseName('');
+    if (phaseInfo) {
+      onSubmit(phaseInfo.well._id, phaseInfo.phaseIndex, subPhaseName.trim());
+      setSubPhaseName('');
       setError('');
     }
   };
@@ -48,27 +51,31 @@ const AddPhaseModal: React.FC<AddPhaseModalProps> = ({
   };
 
   const handleClose = () => {
-    setPhaseName('');
+    setSubPhaseName('');
     setError('');
     onClose();
   };
 
+  if (!phaseInfo) return null;
+
+  const { well, phaseIndex } = phaseInfo;
+  const phase = well.wellPhases[phaseIndex];
+
   return (
     <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Add New Phase</DialogTitle>
+      <DialogTitle>Add New Subphase</DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 2 }}>
-          {well && (
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Adding phase to: <strong>{well.wellName}</strong>
-            </Typography>
-          )}
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Adding subphase to: <strong>{well.wellName}</strong> → 
+            <strong>{phase?.phaseName}</strong>
+          </Typography>
           
           <TextField
-            label="Phase Name"
-            value={phaseName}
+            label="Subphase Name"
+            value={subPhaseName}
             onChange={(e) => {
-              setPhaseName(e.target.value);
+              setSubPhaseName(e.target.value);
               setError('');
             }}
             onKeyPress={handleKeyPress}
@@ -78,18 +85,18 @@ const AddPhaseModal: React.FC<AddPhaseModalProps> = ({
             required
             size="small"
             autoFocus
-            placeholder="e.g., Drilling, Completion, Production"
+            placeholder="e.g., Casing, Cementing, Testing"
           />
         </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          Add Phase
+          Add Subphase
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default AddPhaseModal;
+export default AddSubPhaseModal;

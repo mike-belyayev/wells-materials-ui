@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('User data received:', userData);
         
         setUser({
-          userName: userData.userName, // Changed from userEmail to userName
+          userName: userData.userName,
           isAdmin: userData.isAdmin,
           firstName: userData.firstName,
           lastName: userData.lastName,
@@ -70,8 +70,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           token
         });
 
+        // CHANGE 1: Update this navigation to /equipment
         if (location.pathname === '/') {
-          navigate('/heli');
+          navigate('/equipment'); // Changed from '/heli' to '/equipment'
         }
       } catch (err) {
         console.error('Auth check error:', err);
@@ -92,14 +93,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const login = async (userName: string, password: string) => { // Changed parameter from userEmail to userName
+  const login = async (userName: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userName, password }) // Changed from userEmail to userName
+        body: JSON.stringify({ userName, password })
       });
 
       if (!response.ok) {
@@ -120,7 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem('token', authToken);
       
       setUser({
-        userName: data.user.userName, // Changed from userEmail to userName
+        userName: data.user.userName,
         isAdmin: data.user.isAdmin,
         firstName: data.user.firstName,
         lastName: data.user.lastName,
@@ -128,7 +129,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         token: authToken
       });
       
-      navigate('/heli');
+      // CHANGE 2: Update this navigation to /equipment
+      navigate('/equipment'); // Changed from '/heli' to '/equipment'
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);

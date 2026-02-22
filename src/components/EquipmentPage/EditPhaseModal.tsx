@@ -1,5 +1,5 @@
-// src/components/EquipmentPage/AddPhaseModal.tsx
-import { useState } from 'react';
+// src/components/EquipmentPage/EditPhaseModal.tsx
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,21 +12,31 @@ import {
 } from '@mui/material';
 import type { Well } from '../../types';
 
-interface AddPhaseModalProps {
+interface EditPhaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  well: Well | null;
-  onSubmit: (wellId: string, phaseName: string) => void;
+  phaseInfo: {
+    well: Well;
+    phaseIndex: number;
+    phaseName: string;
+  } | null;
+  onSubmit: (wellId: string, phaseIndex: number, phaseName: string) => void;
 }
 
-const AddPhaseModal: React.FC<AddPhaseModalProps> = ({
+const EditPhaseModal: React.FC<EditPhaseModalProps> = ({
   isOpen,
   onClose,
-  well,
+  phaseInfo,
   onSubmit
 }) => {
   const [phaseName, setPhaseName] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (phaseInfo) {
+      setPhaseName(phaseInfo.phaseName);
+    }
+  }, [phaseInfo]);
 
   const handleSubmit = () => {
     if (!phaseName.trim()) {
@@ -34,10 +44,8 @@ const AddPhaseModal: React.FC<AddPhaseModalProps> = ({
       return;
     }
     
-    if (well) {
-      onSubmit(well._id, phaseName.trim());
-      setPhaseName('');
-      setError('');
+    if (phaseInfo) {
+      onSubmit(phaseInfo.well._id, phaseInfo.phaseIndex, phaseName.trim());
     }
   };
 
@@ -47,22 +55,16 @@ const AddPhaseModal: React.FC<AddPhaseModalProps> = ({
     }
   };
 
-  const handleClose = () => {
-    setPhaseName('');
-    setError('');
-    onClose();
-  };
+  if (!phaseInfo) return null;
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Add New Phase</DialogTitle>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Edit Phase</DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 2 }}>
-          {well && (
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Adding phase to: <strong>{well.wellName}</strong>
-            </Typography>
-          )}
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Editing phase in: <strong>{phaseInfo.well.wellName}</strong>
+          </Typography>
           
           <TextField
             label="Phase Name"
@@ -78,18 +80,17 @@ const AddPhaseModal: React.FC<AddPhaseModalProps> = ({
             required
             size="small"
             autoFocus
-            placeholder="e.g., Drilling, Completion, Production"
           />
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          Add Phase
+          Update Phase
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default AddPhaseModal;
+export default EditPhaseModal;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Add useEffect
 import { 
   Box, 
   TextField, 
@@ -8,15 +8,25 @@ import {
   Alert
 } from '@mui/material';
 import { useAuth } from '../auth/AuthContext';
+import { useNavigate } from 'react-router-dom'; // Add useNavigate
 
 const HomePage = () => {
-  const [userName, setUserName] = useState(''); // Changed from email to userName
+  const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
-  const { login, error, isLoading } = useAuth();
+  const { login, error, isLoading, user } = useAuth(); // Add user from useAuth
+  const navigate = useNavigate(); // Add navigate
+
+  // Redirect to equipment page if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/equipment', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(userName, password); // Changed from email to userName
+    await login(userName, password);
+    // No need to navigate here - the useEffect above will handle it
   };
 
   return (
@@ -43,7 +53,7 @@ const HomePage = () => {
           color: 'primary.main', 
           fontWeight: 600 
         }}>
-          Login
+          Wells Materials Management
         </Typography>
         
         {error && (
@@ -54,14 +64,14 @@ const HomePage = () => {
 
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Username" // Changed from "Email Address"
-            type="text" // Changed from "email"
+            label="Username"
+            type="text"
             fullWidth
             margin="normal"
-            value={userName} // Changed from email to userName
-            onChange={(e) => setUserName(e.target.value)} // Changed from setEmail to setUserName
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             required
-            helperText="Enter your username (letters, numbers, and hyphens only)"
+            helperText="Enter your username"
           />
           
           <TextField
