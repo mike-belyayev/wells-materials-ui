@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         // CHANGE 1: Update this navigation to /equipment
         if (location.pathname === '/') {
-          navigate('/equipment'); // Changed from '/heli' to '/equipment'
+          navigate('/equipment');
         }
       } catch (err) {
         console.error('Auth check error:', err);
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       // CHANGE 2: Update this navigation to /equipment
-      navigate('/equipment'); // Changed from '/heli' to '/equipment'
+      navigate('/equipment');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);

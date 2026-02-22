@@ -538,7 +538,7 @@ const AdminPage = () => {
           </Typography>
           <IconButton 
             color="inherit" 
-            onClick={() => navigate('/heli')} 
+            onClick={() => navigate('/equipment')} 
             sx={{ ml: 2 }}
           >
             <DashboardIcon />

@@ -22,7 +22,6 @@ interface WellColumnProps {
 const WellColumn: React.FC<WellColumnProps> = ({
   well,
   columnCount,
-  onAddPhase,
   onAddSubPhase,
   onAddItem,
   onEditPhase,
