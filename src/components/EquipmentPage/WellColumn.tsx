@@ -1,7 +1,7 @@
 // src/components/EquipmentPage/WellColumn.tsx
 import { useState } from 'react';
 import { Box, Typography, IconButton, Collapse } from '@mui/material';
-import { Add, ExpandMore, ExpandLess, MoreHoriz } from '@mui/icons-material';
+import { Add, ExpandMore, ExpandLess } from '@mui/icons-material';
 import type { Well } from '../../types';
 import './WellColumn.css';
 

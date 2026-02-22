@@ -1,7 +1,7 @@
 // src/pages/EquipmentPage.tsx
-import { useState, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Box, Button, MenuItem, Select, FormControl, InputLabel, TextField, Popover } from '@mui/material';
-import { Settings, Add, Search, ViewColumn } from '@mui/icons-material';
+import { useState, useEffect } from 'react';
+import { AppBar, Toolbar, IconButton, Typography, Box, Button, MenuItem, Select, TextField, Popover } from '@mui/material';
+import { Settings, Add, Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import LocationDropdown from '../components/HeliPage/LocationDropdown';
