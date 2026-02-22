@@ -1,45 +1,17 @@
 // src/types/index.ts
 
 // ========== Existing Types (Keep these) ==========
-export interface Passenger {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  jobRole: string;
-}
-
-export interface Trip {
-  _id: string;
-  passengerId: string;
-  fromOrigin: string;
-  toDestination: string;
-  tripDate: string;
-  confirmed: boolean;
-  numberOfPassengers?: number;
-  sortIndices?: {
-    [key: string]: number;
-  };
-}
-
 export interface Site {
   _id: string;
   siteName: string;
   currentPOB: number;
   maximumPOB: number;
   pobUpdatedDate: string;
+  activeWell?: string | null;  // Added for well reference
+  nextWell?: string | null;     // Added for well reference
 }
 
-export interface DayData {
-  date: Date;
-  incoming: Trip[];
-  outgoing: Trip[];
-  pob: number;
-  updateInfo?: string;
-}
-
-export type TripType = 'incoming' | 'outgoing';
-
-// ========== New Equipment/Well Types ==========
+// ========== Equipment/Well Types ==========
 
 export type ItemStatus = 'neutral' | 'green' | 'orange' | 'red';
 
@@ -49,7 +21,7 @@ export interface Item {
   itemQuantity?: string;
   itemDescription?: string;
   itemLocation?: string;
-  itemState?: ItemStatus;  // Make sure this is only declared once
+  itemState?: ItemStatus;
   itemComment?: string;
 }
 
@@ -75,10 +47,10 @@ export interface Well {
   updatedAt: string;
 }
 
-// ========== Extended Site Type (with well references) ==========
-export interface SiteWithWells extends Site {
-  activeWell?: Well | string | null;
-  nextWell?: Well | string | null;
+// ========== Extended Site Type (with populated well references) ==========
+export interface SiteWithWells extends Omit<Site, 'activeWell' | 'nextWell'> {
+  activeWell?: Well | null;
+  nextWell?: Well | null;
 }
 
 // ========== API Request/Response Types for Wells ==========
@@ -99,12 +71,16 @@ export interface AddPhaseRequest {
   phaseName: string;
 }
 
+export interface AddSubPhaseRequest {
+  subPhaseName: string;
+}
+
 export interface AddItemRequest {
   itemName: string;
   itemQuantity?: string;
   itemDescription?: string;
   itemLocation?: string;
-  itemState?: ItemStatus;  // Updated to use ItemStatus
+  itemState?: ItemStatus;
   itemComment?: string;
 }
 
@@ -113,7 +89,7 @@ export interface AssignWellRequest {
   wellId: string;
 }
 
-export interface SiteWellResponse extends Site {
+export interface SiteWellResponse extends Omit<Site, 'activeWell' | 'nextWell'> {
   activeWell?: Well;
   nextWell?: Well;
 }
@@ -123,7 +99,13 @@ export interface WellColumnProps {
   well: Well;
   columnCount: 1 | 2 | 3 | 4;
   onAddPhase: (well: Well) => void;
+  onAddSubPhase: (well: Well, phaseIndex: number) => void;
   onAddItem: (well: Well, phaseIndex: number, subPhaseIndex: number) => void;
+  onEditPhase: (well: Well, phaseIndex: number, phaseName: string) => void;
+  onEditSubPhase: (well: Well, phaseIndex: number, subPhaseIndex: number, subPhaseName: string) => void;
+  onEditItem: (well: Well, phaseIndex: number, subPhaseIndex: number, itemIndex: number, item: Item) => void;
+  onMovePhase: (well: Well, phaseIndex: number, direction: 'up' | 'down') => void;
+  onMoveSubPhase: (well: Well, phaseIndex: number, subPhaseIndex: number, direction: 'up' | 'down') => void;
   isAdmin: boolean;
 }
 
@@ -139,6 +121,7 @@ export interface CreateWellModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (wellData: CreateWellRequest & { wellPhases: [] }) => void;
+  currentLocation: string;
 }
 
 export interface AddPhaseModalProps {
@@ -146,6 +129,16 @@ export interface AddPhaseModalProps {
   onClose: () => void;
   well: Well | null;
   onSubmit: (wellId: string, phaseName: string) => void;
+}
+
+export interface AddSubPhaseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  phaseInfo: {
+    well: Well;
+    phaseIndex: number;
+  } | null;
+  onSubmit: (wellId: string, phaseIndex: number, subPhaseName: string) => void;
 }
 
 export interface AddItemModalProps {
@@ -157,6 +150,42 @@ export interface AddItemModalProps {
     subPhaseIndex: number;
   } | null;
   onSubmit: (wellId: string, phaseIndex: number, subPhaseIndex: number, itemData: AddItemRequest) => void;
+}
+
+export interface EditPhaseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  phaseInfo: {
+    well: Well;
+    phaseIndex: number;
+    phaseName: string;
+  } | null;
+  onSubmit: (wellId: string, phaseIndex: number, phaseName: string) => void;
+}
+
+export interface EditSubPhaseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  subPhaseInfo: {
+    well: Well;
+    phaseIndex: number;
+    subPhaseIndex: number;
+    subPhaseName: string;
+  } | null;
+  onSubmit: (wellId: string, phaseIndex: number, subPhaseIndex: number, subPhaseName: string) => void;
+}
+
+export interface EditItemModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  itemInfo: {
+    well: Well;
+    phaseIndex: number;
+    subPhaseIndex: number;
+    itemIndex: number;
+    item: Item;
+  } | null;
+  onSubmit: (wellId: string, phaseIndex: number, subPhaseIndex: number, itemIndex: number, itemData: Partial<Item>) => void;
 }
 
 // ========== Utility Types ==========

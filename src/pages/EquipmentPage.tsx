@@ -434,14 +434,14 @@ const EquipmentPage = () => {
 
           <Box className="header-right">
             <Box className="dev-credit">
-              <Typography variant="caption">Developed for Wells Team by:</Typography>
+              <Typography variant="caption">App developed for Wells Team by:</Typography>
               <Typography variant="caption" className="dev-email">
                 Mike.Belyayev@exxonmobil.com
               </Typography>
             </Box>
             
             {isAdmin && (
-              <IconButton onClick={() => navigate('/admin')} size="small">
+              <IconButton onClick={() => navigate('/admin')} size="small" className="admin-btn">
                 <Settings />
               </IconButton>
             )}

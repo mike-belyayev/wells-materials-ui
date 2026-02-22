@@ -1,3 +1,4 @@
+// src/pages/AdminPage.tsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,27 +22,17 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  Chip,
-  Alert as MuiAlert
+  Chip
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
-  Person,
   People,
   LocationOn,
   Close
 } from '@mui/icons-material';
-import PassengersTab from '../components/admin/PassengersTab';
 import UsersTab from '../components/admin/UsersTab';
 import SitesTab from '../components/admin/SitesTab';
 import { API_ENDPOINTS } from '../config/api';
-
-interface Passenger {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  jobRole: string;
-}
 
 interface User {
   _id: string;
@@ -59,13 +50,8 @@ interface Site {
   currentPOB: number;
   maximumPOB: number;
   pobUpdatedDate: string;
-}
-
-interface PassengerForm {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  jobRole: string;
+  activeWell?: string | null;
+  nextWell?: string | null;
 }
 
 interface UserForm {
@@ -87,23 +73,21 @@ interface SiteForm {
 }
 
 // Define the available locations
-const LOCATIONS = ['NTM', 'Ogle', 'NSC', 'NDT', 'NBD', 'STC'];
+const LOCATIONS = ['NTM', 'NSC', 'NDT', 'NBD', 'STC']; // Removed Ogle
 
 const AdminPage = () => {
   const { user, logout } = useAuth();
   const token = user?.token;
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
-  const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState({
-    passengers: false,
     users: false,
     sites: false
   });
   const [openDialog, setOpenDialog] = useState(false);
-  const [currentItem, setCurrentItem] = useState<PassengerForm | UserForm | SiteForm | null>(null);
+  const [currentItem, setCurrentItem] = useState<UserForm | SiteForm | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -111,7 +95,6 @@ const AdminPage = () => {
     severity: 'success' as 'success' | 'error'
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [duplicateWarning, setDuplicateWarning] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,16 +105,11 @@ const AdminPage = () => {
         };
 
         if (activeTab === 0) {
-          setLoading(prev => ({ ...prev, passengers: true }));
-          const response = await fetch(API_ENDPOINTS.PASSENGERS, { headers });
-          const data = await response.json();
-          setPassengers(data);
-        } else if (activeTab === 1) {
           setLoading(prev => ({ ...prev, users: true }));
           const response = await fetch(API_ENDPOINTS.USERS, { headers });
           const data = await response.json();
           setUsers(data);
-        } else if (activeTab === 2) {
+        } else if (activeTab === 1) {
           setLoading(prev => ({ ...prev, sites: true }));
           const response = await fetch(API_ENDPOINTS.SITES, { headers });
           const data = await response.json();
@@ -145,7 +123,6 @@ const AdminPage = () => {
         });
       } finally {
         setLoading({
-          passengers: false,
           users: false,
           sites: false
         });
@@ -155,84 +132,16 @@ const AdminPage = () => {
     fetchData();
   }, [activeTab, token]);
 
-  // Check for duplicate passengers when form fields change
-  useEffect(() => {
-    if (activeTab === 0 && openDialog && currentItem && !isEditing) {
-      const passengerForm = currentItem as PassengerForm;
-      const { firstName, lastName } = passengerForm;
-      
-      if (firstName.trim() || lastName.trim()) {
-        const duplicates = passengers.filter(p => 
-          p.firstName.toLowerCase().includes(firstName.toLowerCase()) &&
-          p.lastName.toLowerCase().includes(lastName.toLowerCase())
-        );
-        
-        if (duplicates.length > 0) {
-          if (firstName && lastName) {
-            // Exact match found
-            const exactMatch = duplicates.find(p => 
-              p.firstName.toLowerCase() === firstName.toLowerCase() && 
-              p.lastName.toLowerCase() === lastName.toLowerCase()
-            );
-            
-            if (exactMatch) {
-              setDuplicateWarning(`⚠️ Exact match found: "${exactMatch.firstName} ${exactMatch.lastName}" works as "${exactMatch.jobRole}"`);
-            } else {
-              // Partial matches
-              const firstNameMatches = passengers.filter(p => 
-                p.firstName.toLowerCase().includes(firstName.toLowerCase())
-              ).length;
-              
-              const lastNameMatches = passengers.filter(p => 
-                p.lastName.toLowerCase().includes(lastName.toLowerCase())
-              ).length;
-              
-              setDuplicateWarning(
-                `🔍 ${firstNameMatches} passenger(s) with similar first name, ${lastNameMatches} with similar last name. ` +
-                `${duplicates.length} potential match(es) found.`
-              );
-            }
-          } else if (firstName) {
-            const firstNameMatches = passengers.filter(p => 
-              p.firstName.toLowerCase().includes(firstName.toLowerCase())
-            ).length;
-            setDuplicateWarning(`🔍 ${firstNameMatches} passenger(s) with similar first name`);
-          } else if (lastName) {
-            const lastNameMatches = passengers.filter(p => 
-              p.lastName.toLowerCase().includes(lastName.toLowerCase())
-            ).length;
-            setDuplicateWarning(`🔍 ${lastNameMatches} passenger(s) with similar last name`);
-          }
-        } else {
-          setDuplicateWarning('');
-        }
-      } else {
-        setDuplicateWarning('');
-      }
-    } else {
-      setDuplicateWarning('');
-    }
-  }, [currentItem, passengers, activeTab, openDialog, isEditing]);
-
-  const handleOpenDialog = (item: Passenger | User | Site | null = null) => {
-    if (item && activeTab === 1) {
+  const handleOpenDialog = (item: User | Site | null = null) => {
+    if (item && activeTab === 0) {
       setCurrentItem({
         ...item,
         password: '',
         confirmPassword: ''
       } as UserForm);
-    } else if (item && activeTab === 0) {
-      setCurrentItem(item as PassengerForm);
-    } else if (item && activeTab === 2) {
+    } else if (item && activeTab === 1) {
       setCurrentItem(item as SiteForm);
     } else if (activeTab === 0) {
-      setCurrentItem({
-        _id: '',
-        firstName: '',
-        lastName: '',
-        jobRole: ''
-      });
-    } else if (activeTab === 1) {
       setCurrentItem({
         _id: '',
         userName: '',
@@ -240,10 +149,10 @@ const AdminPage = () => {
         confirmPassword: '',
         firstName: '',
         lastName: '',
-        homeLocation: 'NSC', // Default to NSC
+        homeLocation: 'NSC',
         isAdmin: false
       });
-    } else if (activeTab === 2) {
+    } else if (activeTab === 1) {
       setCurrentItem({
         _id: '',
         siteName: '',
@@ -253,13 +162,11 @@ const AdminPage = () => {
     }
     setIsEditing(!!item);
     setOpenDialog(true);
-    setDuplicateWarning('');
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setCurrentItem(null);
-    setDuplicateWarning('');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -269,15 +176,13 @@ const AdminPage = () => {
 
   const handleSave = async () => {
     try {
-      if (activeTab === 1) {
+      if (activeTab === 0) {
         const userForm = currentItem as UserForm;
         
-        // For new users, require password
         if (!isEditing && (!userForm.password || userForm.password.length < 6)) {
           throw new Error('Password must be at least 6 characters');
         }
         
-        // For new users or when password is provided during edit, validate confirmation
         if ((!isEditing || userForm.password) && userForm.password !== userForm.confirmPassword) {
           throw new Error("Passwords don't match");
         }
@@ -288,10 +193,6 @@ const AdminPage = () => {
       let dataToSend;
 
       if (activeTab === 0) {
-        url = API_ENDPOINTS.PASSENGERS;
-        dataToSend = currentItem;
-      } else if (activeTab === 1) {
-        // Use different endpoints for creating vs editing users
         if (isEditing) {
           url = API_ENDPOINTS.USER_BY_ID((currentItem as UserForm)._id);
           const userForm = currentItem as UserForm;
@@ -304,7 +205,6 @@ const AdminPage = () => {
             isAdmin: userForm.isAdmin
           };
         } else {
-          // Use register endpoint for new users
           url = API_ENDPOINTS.REGISTER;
           const userForm = currentItem as UserForm;
           dataToSend = {
@@ -316,7 +216,7 @@ const AdminPage = () => {
             isAdmin: userForm.isAdmin
           };
         }
-      } else if (activeTab === 2) {
+      } else if (activeTab === 1) {
         const siteForm = currentItem as SiteForm;
         url = API_ENDPOINTS.SITE_POB(siteForm.siteName);
         dataToSend = {
@@ -324,26 +224,24 @@ const AdminPage = () => {
         };
       }
 
-      const id = currentItem?._id;
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       };
 
-      if (activeTab === 1 && !isEditing) {
-        // For new user registration, use POST to register endpoint
+      if (activeTab === 0 && !isEditing) {
         response = await fetch(url!, {
           method: 'POST',
           headers,
           body: JSON.stringify(dataToSend),
         });
-      } else if (isEditing && id && activeTab !== 2) {
+      } else if (isEditing && activeTab === 0) {
         response = await fetch(`${url}`, {
           method: 'PUT',
           headers,
           body: JSON.stringify(dataToSend),
         });
-      } else if (activeTab === 2) {
+      } else if (activeTab === 1) {
         response = await fetch(url!, {
           method: 'PUT',
           headers,
@@ -375,27 +273,10 @@ const AdminPage = () => {
       };
       
       if (activeTab === 0) {
-        const passengersResponse = await fetch(API_ENDPOINTS.PASSENGERS, { headers: headersForRefresh });
-        const updatedPassengers = await passengersResponse.json();
-        setPassengers(updatedPassengers);
-        
-        // Clear form fields but keep dialog open for adding more passengers
-        if (!isEditing) {
-          setCurrentItem({
-            _id: '',
-            firstName: '',
-            lastName: '',
-            jobRole: ''
-          });
-          setDuplicateWarning('');
-        } else {
-          handleCloseDialog();
-        }
-      } else if (activeTab === 1) {
         const usersResponse = await fetch(API_ENDPOINTS.USERS, { headers: headersForRefresh });
         setUsers(await usersResponse.json());
         handleCloseDialog();
-      } else if (activeTab === 2) {
+      } else if (activeTab === 1) {
         const sitesResponse = await fetch(API_ENDPOINTS.SITES, { headers: headersForRefresh });
         setSites(await sitesResponse.json());
         handleCloseDialog();
@@ -412,9 +293,7 @@ const AdminPage = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const url = activeTab === 0 
-        ? API_ENDPOINTS.PASSENGER_BY_ID(id)
-        : API_ENDPOINTS.USER_BY_ID(id);
+      const url = API_ENDPOINTS.USER_BY_ID(id);
       
       const response = await fetch(url, {
         method: 'DELETE',
@@ -432,11 +311,7 @@ const AdminPage = () => {
         severity: 'success'
       });
 
-      if (activeTab === 0) {
-        setPassengers(passengers.filter(p => p._id !== id));
-      } else {
-        setUsers(users.filter(u => u._id !== id));
-      }
+      setUsers(users.filter(u => u._id !== id));
     } catch (err) {
       setSnackbar({
         open: true,
@@ -478,19 +353,6 @@ const AdminPage = () => {
         severity: 'error'
       });
     }
-  };
-
-  const filterPassengers = (passenger: Passenger) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    const firstName = passenger.firstName?.toLowerCase() || '';
-    const lastName = passenger.lastName?.toLowerCase() || '';
-    const jobRole = passenger.jobRole?.toLowerCase() || '';
-    return (
-      firstName.includes(term) ||
-      lastName.includes(term) ||
-      jobRole.includes(term)
-    );
   };
 
   const filterUsers = (user: User) => {
@@ -569,29 +431,18 @@ const AdminPage = () => {
             textColor="primary"
             variant="fullWidth"
           >
-            <Tab label="Passengers" icon={<Person />} />
             <Tab label="Users" icon={<People />} />
             <Tab label="Sites" icon={<LocationOn />} />
           </Tabs>
 
           <Box sx={{ mt: 3 }}>
-            {loading.passengers || loading.users || loading.sites ? (
+            {loading.users || loading.sites ? (
               <Box display="flex" justifyContent="center" p={4}>
                 <CircularProgress />
               </Box>
             ) : (
               <>
                 {activeTab === 0 && (
-                  <PassengersTab
-                    passengers={passengers}
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    onOpenDialog={handleOpenDialog}
-                    onDelete={handleDelete}
-                    filterPassengers={filterPassengers}
-                  />
-                )}
-                {activeTab === 1 && (
                   <UsersTab
                     users={users}
                     searchTerm={searchTerm}
@@ -601,7 +452,7 @@ const AdminPage = () => {
                     filterUsers={filterUsers}
                   />
                 )}
-                {activeTab === 2 && (
+                {activeTab === 1 && (
                   <SitesTab
                     sites={sites}
                     searchTerm={searchTerm}
@@ -621,7 +472,7 @@ const AdminPage = () => {
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {isEditing ? 'Edit' : 'Add New'} {activeTab === 0 ? 'Passenger' : activeTab === 2 ? 'Site' : 'User'}
+          {isEditing ? 'Edit' : 'Add New'} {activeTab === 1 ? 'Site' : 'User'}
           <IconButton onClick={handleCloseDialog} size="small">
             <Close />
           </IconButton>
@@ -629,43 +480,6 @@ const AdminPage = () => {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             {activeTab === 0 ? (
-              <>
-                <TextField
-                  name="firstName"
-                  label="First Name"
-                  value={(currentItem as PassengerForm)?.firstName || ''}
-                  onChange={handleInputChange}
-                  fullWidth
-                  required
-                />
-                <TextField
-                  name="lastName"
-                  label="Last Name"
-                  value={(currentItem as PassengerForm)?.lastName || ''}
-                  onChange={handleInputChange}
-                  fullWidth
-                  required
-                />
-                <TextField
-                  name="jobRole"
-                  label="Job Role"
-                  value={(currentItem as PassengerForm)?.jobRole || ''}
-                  onChange={handleInputChange}
-                  fullWidth
-                  required
-                />
-                
-                {/* Duplicate Warning */}
-                {duplicateWarning && (
-                  <MuiAlert 
-                    severity={duplicateWarning.includes('⚠️ Exact match found') ? 'warning' : 'info'}
-                    sx={{ mt: 1 }}
-                  >
-                    {duplicateWarning}
-                  </MuiAlert>
-                )}
-              </>
-            ) : activeTab === 1 ? (
               <>
                 <TextField
                   name="userName"
@@ -678,7 +492,6 @@ const AdminPage = () => {
                   helperText="Letters, numbers, and hyphens only"
                 />
                 
-                {/* Password fields - always show for new users, optional for editing */}
                 <TextField
                   name="password"
                   label={isEditing ? "New Password (leave blank to keep current)" : "Password"}
@@ -725,7 +538,6 @@ const AdminPage = () => {
                   required
                 />
                 
-                {/* Updated: Changed from TextField to Select dropdown for homeLocation */}
                 <TextField
                   name="homeLocation"
                   label="Home Location"
@@ -761,7 +573,7 @@ const AdminPage = () => {
                   <MenuItem value="true">Yes</MenuItem>
                 </TextField>
               </>
-            ) : activeTab === 2 ? (
+            ) : activeTab === 1 ? (
               <>
                 <TextField
                   name="siteName"
@@ -813,7 +625,7 @@ const AdminPage = () => {
             {isEditing ? 'Cancel' : 'Close'}
           </Button>
           <Button onClick={handleSave} variant="contained" color="primary">
-            {isEditing ? 'Update' : 'Add'} {activeTab === 0 ? 'Passenger' : activeTab === 2 ? 'Site' : 'User'}
+            {isEditing ? 'Update' : 'Add'} {activeTab === 1 ? 'Site' : 'User'}
           </Button>
         </DialogActions>
       </Dialog>

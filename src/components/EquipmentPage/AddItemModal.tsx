@@ -48,7 +48,6 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
     itemDescription: '',
     itemLocation: '',
     itemState: 'neutral' as ItemStatus,
-    itemComment: ''
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
@@ -98,8 +97,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
         itemQuantity: '',
         itemDescription: '',
         itemLocation: '',
-        itemState: 'neutral',
-        itemComment: ''
+        itemState: 'neutral'
       });
       setErrors({});
     }
@@ -111,8 +109,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       itemQuantity: '',
       itemDescription: '',
       itemLocation: '',
-      itemState: 'neutral',
-      itemComment: ''
+      itemState: 'neutral'
     });
     setErrors({});
     onClose();
@@ -217,19 +214,6 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 6 }}>
-              <TextField
-                name="itemComment"
-                label="Comments"
-                value={formData.itemComment}
-                onChange={handleChange}
-                onKeyPress={handleKeyPress}
-                fullWidth
-                size="small"
-                placeholder="Additional notes"
-              />
             </Grid>
           </Grid>
         </Box>

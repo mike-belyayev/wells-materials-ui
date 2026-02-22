@@ -23,10 +23,6 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD: `${API_BASE_URL}/api/users/forgot-password`,
   RESET_PASSWORD: (token: string) => `${API_BASE_URL}/api/users/reset-password/${token}`,
   
-  // Passenger endpoints
-  PASSENGERS: `${API_BASE_URL}/api/passengers`,
-  PASSENGER_BY_ID: (id: string) => `${API_BASE_URL}/api/passengers/${id}`,
-  
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
   USER_BY_ID: (id: string) => `${API_BASE_URL}/api/users/${id}`,
@@ -38,11 +34,6 @@ export const API_ENDPOINTS = {
   SITE_BY_NAME: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}`,
   SITE_POB: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}/pob`,
   INITIALIZE_SITES: `${API_BASE_URL}/api/sites/initialize`,
-  
-  // Trip endpoints
-  TRIPS: `${API_BASE_URL}/api/trips`,
-  TRIP_BY_ID: (id: string) => `${API_BASE_URL}/api/trips/${id}`,
-  TRIP_SORT: (id: string) => `${API_BASE_URL}/api/trips/${id}/sort`,
   
   // ===== NEW WELL ENDPOINTS =====
   WELLS: `${API_BASE_URL}/api/wells`,

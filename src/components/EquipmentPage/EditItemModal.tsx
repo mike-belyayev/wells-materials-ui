@@ -50,7 +50,6 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     itemDescription: '',
     itemLocation: '',
     itemState: 'neutral' as ItemStatus,
-    itemComment: ''
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
@@ -62,7 +61,6 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         itemDescription: itemInfo.item.itemDescription || '',
         itemLocation: itemInfo.item.itemLocation || '',
         itemState: itemInfo.item.itemState || 'neutral',
-        itemComment: itemInfo.item.itemComment || ''
       });
     }
   }, [itemInfo]);
@@ -208,19 +206,6 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 6 }}>
-              <TextField
-                name="itemComment"
-                label="Comments"
-                value={formData.itemComment}
-                onChange={handleChange}
-                onKeyPress={handleKeyPress}
-                fullWidth
-                size="small"
-                placeholder="Additional notes"
-              />
             </Grid>
           </Grid>
         </Box>
