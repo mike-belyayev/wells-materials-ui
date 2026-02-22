@@ -302,16 +302,6 @@ const WellColumn: React.FC<WellColumnProps> = ({
           </Box>
         ))}
       </Box>
-
-      {/* Add Phase Button */}
-      {isAdmin && (
-        <Box className="add-phase-container">
-          <IconButton onClick={() => onAddPhase(well)} className="add-phase-btn">
-            <Add />
-          </IconButton>
-          <Typography variant="caption">Add Phase</Typography>
-        </Box>
-      )}
     </Box>
   );
 };
