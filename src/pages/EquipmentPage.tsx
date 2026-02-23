@@ -85,38 +85,38 @@ const EquipmentPage = () => {
         }
     }, [allWells, userRig]);
 
-// Update active/next wells when site data loads
-useEffect(() => {
-  if (currentSite && allWells.length > 0) {
-    // Handle active well - could be either string ID or populated object
-    if (currentSite.activeWell) {
-      // Check if it's an object with _id property (populated well)
-      if (typeof currentSite.activeWell === 'object' && currentSite.activeWell !== null && '_id' in currentSite.activeWell) {
-        // It's already populated
-        setActiveWell(currentSite.activeWell as Well);
-      } 
-      // Check if it's a string (just the ID)
-      else if (typeof currentSite.activeWell === 'string') {
-        const active = allWells.find(w => w._id === currentSite.activeWell);
-        if (active) setActiveWell(active);
-      }
-    }
-    
-    // Handle next well - could be either string ID or populated object
-    if (currentSite.nextWell) {
-      // Check if it's an object with _id property (populated well)
-      if (typeof currentSite.nextWell === 'object' && currentSite.nextWell !== null && '_id' in currentSite.nextWell) {
-        // It's already populated
-        setNextWell(currentSite.nextWell as Well);
-      } 
-      // Check if it's a string (just the ID)
-      else if (typeof currentSite.nextWell === 'string') {
-        const next = allWells.find(w => w._id === currentSite.nextWell);
-        if (next) setNextWell(next);
-      }
-    }
-  }
-}, [currentSite, allWells]);
+    // Update active/next wells when site data loads
+    useEffect(() => {
+        if (currentSite && allWells.length > 0) {
+            // Handle active well - could be either string ID or populated object
+            if (currentSite.activeWell) {
+                // Check if it's an object with _id property (populated well)
+                if (typeof currentSite.activeWell === 'object' && currentSite.activeWell !== null && '_id' in currentSite.activeWell) {
+                    // It's already populated
+                    setActiveWell(currentSite.activeWell as Well);
+                }
+                // Check if it's a string (just the ID)
+                else if (typeof currentSite.activeWell === 'string') {
+                    const active = allWells.find(w => w._id === currentSite.activeWell);
+                    if (active) setActiveWell(active);
+                }
+            }
+
+            // Handle next well - could be either string ID or populated object
+            if (currentSite.nextWell) {
+                // Check if it's an object with _id property (populated well)
+                if (typeof currentSite.nextWell === 'object' && currentSite.nextWell !== null && '_id' in currentSite.nextWell) {
+                    // It's already populated
+                    setNextWell(currentSite.nextWell as Well);
+                }
+                // Check if it's a string (just the ID)
+                else if (typeof currentSite.nextWell === 'string') {
+                    const next = allWells.find(w => w._id === currentSite.nextWell);
+                    if (next) setNextWell(next);
+                }
+            }
+        }
+    }, [currentSite, allWells]);
 
     const fetchAllWells = async () => {
         try {
@@ -466,14 +466,40 @@ useEffect(() => {
             if (response.ok) {
                 const savedWell = await response.json();
 
+                // Update allWells
                 setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
 
+                // Update activeWell if it's the one being edited
                 if (activeWell && activeWell._id === wellId) {
                     setActiveWell(savedWell);
                 }
 
+                // Update nextWell if it's the one being edited
                 if (nextWell && nextWell._id === wellId) {
                     setNextWell(savedWell);
+                }
+
+                // Also update the site data to ensure consistency
+                if (currentSite) {
+                    const updatedSite = { ...currentSite };
+
+                    // Check if activeWell exists and is an object before accessing _id
+                    if (currentSite.activeWell &&
+                        typeof currentSite.activeWell === 'object' &&
+                        '_id' in currentSite.activeWell &&
+                        currentSite.activeWell._id === wellId) {
+                        updatedSite.activeWell = savedWell;
+                    }
+
+                    // Check if nextWell exists and is an object before accessing _id
+                    if (currentSite.nextWell &&
+                        typeof currentSite.nextWell === 'object' &&
+                        '_id' in currentSite.nextWell &&
+                        currentSite.nextWell._id === wellId) {
+                        updatedSite.nextWell = savedWell;
+                    }
+
+                    setCurrentSite(updatedSite);
                 }
 
                 setEditWellModalOpen(false);
