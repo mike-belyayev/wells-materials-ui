@@ -6,12 +6,12 @@
 // ============================================
 // PRODUCTION - Vercel API (UNCOMMENT FOR DEPLOYMENT)
 // ============================================
-const API_BASE_URL = 'https://wells-materials-api.vercel.app';
+const API_BASE_URL = 'https://wells-equipment-api.vercel.app';
 
 // ============================================
 // DEVELOPMENT - Vercel API (UNCOMMENT FOR PRODUCTION)
 // ============================================
-// const API_BASE_URL = 'https://wells-materials-api-dev.vercel.app';
+// const API_BASE_URL = 'https://wells-equipment-api-dev.vercel.app';
 
 console.log('API Base URL:', API_BASE_URL);
 
