@@ -17,7 +17,7 @@ import EditSubPhaseModal from '../components/EquipmentPage/EditSubPhaseModal';
 import EditItemModal from '../components/EquipmentPage/EditItemModal';
 import EditWellModal from '../components/EquipmentPage/EditWellModal';
 import { API_ENDPOINTS } from '../config/api';
-import type { Well, Item, SiteWithWells, SiteWithPopulatedWells } from '../types';
+import type { Well, Item, SiteWithPopulatedWells } from '../types';
 import './EquipmentPage.css';
 
 const EquipmentPage = () => {
