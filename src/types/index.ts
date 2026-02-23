@@ -1,16 +1,29 @@
 // src/types/index.ts
 
-// ========== Existing Types (Keep these) ==========
+// src/types/index.ts
+
+// Base Site type - activeWell and nextWell are ALWAYS string IDs from the database
 export interface Site {
   _id: string;
   siteName: string;
   currentPOB: number;
   maximumPOB: number;
   pobUpdatedDate: string;
-  activeWell?: string | null;  // Added for well reference
-  nextWell?: string | null;     // Added for well reference
+  activeWell?: string | null;  // This is ALWAYS a string ID or null
+  nextWell?: string | null;     // This is ALWAYS a string ID or null
 }
 
+// For API responses when we populate the wells
+export interface SiteWithPopulatedWells extends Omit<Site, 'activeWell' | 'nextWell'> {
+  activeWell?: Well | null;     // This is the populated well object
+  nextWell?: Well | null;       // This is the populated well object
+}
+
+// For the site with-wells endpoint response
+export interface SiteWithWellsResponse extends Omit<Site, 'activeWell' | 'nextWell'> {
+  activeWell?: Well | null;
+  nextWell?: Well | null;
+}
 // ========== Equipment/Well Types ==========
 
 export type ItemStatus = 'neutral' | 'green' | 'orange' | 'red';

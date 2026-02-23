@@ -17,7 +17,7 @@ import EditSubPhaseModal from '../components/EquipmentPage/EditSubPhaseModal';
 import EditItemModal from '../components/EquipmentPage/EditItemModal';
 import EditWellModal from '../components/EquipmentPage/EditWellModal';
 import { API_ENDPOINTS } from '../config/api';
-import type { Well, Item, SiteWithWells } from '../types';
+import type { Well, Item, SiteWithWells, SiteWithPopulatedWells } from '../types';
 import './EquipmentPage.css';
 
 const EquipmentPage = () => {
@@ -30,7 +30,7 @@ const EquipmentPage = () => {
 
     // State
     const [allWells, setAllWells] = useState<Well[]>([]);
-    const [currentSite, setCurrentSite] = useState<SiteWithWells | null>(null);
+    const [currentSite, setCurrentSite] = useState<SiteWithPopulatedWells | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -85,39 +85,6 @@ const EquipmentPage = () => {
         }
     }, [allWells, userRig]);
 
-    // Update active/next wells when site data loads
-    useEffect(() => {
-        if (currentSite && allWells.length > 0) {
-            // Handle active well - could be either string ID or populated object
-            if (currentSite.activeWell) {
-                // Check if it's an object (populated well)
-                if (typeof currentSite.activeWell === 'object' && currentSite.activeWell !== null) {
-                    // It's already populated
-                    setActiveWell(currentSite.activeWell as Well);
-                }
-                // Check if it's a string (just the ID)
-                else if (typeof currentSite.activeWell === 'string') {
-                    const active = allWells.find(w => w._id === currentSite.activeWell);
-                    if (active) setActiveWell(active);
-                }
-            }
-
-            // Handle next well - could be either string ID or populated object
-            if (currentSite.nextWell) {
-                // Check if it's an object (populated well)
-                if (typeof currentSite.nextWell === 'object' && currentSite.nextWell !== null) {
-                    // It's already populated
-                    setNextWell(currentSite.nextWell as Well);
-                }
-                // Check if it's a string (just the ID)
-                else if (typeof currentSite.nextWell === 'string') {
-                    const next = allWells.find(w => w._id === currentSite.nextWell);
-                    if (next) setNextWell(next);
-                }
-            }
-        }
-    }, [currentSite, allWells]);
-
     const fetchAllWells = async () => {
         try {
             const response = await fetch(API_ENDPOINTS.WELLS, {
@@ -143,9 +110,17 @@ const EquipmentPage = () => {
             });
 
             if (response.ok) {
-                const data: SiteWithWells = await response.json();
+                const data: SiteWithPopulatedWells = await response.json();
                 console.log('Fetched site data:', data);
                 setCurrentSite(data);
+
+                // Set active and next wells directly from the populated data
+                if (data.activeWell) {
+                    setActiveWell(data.activeWell);
+                }
+                if (data.nextWell) {
+                    setNextWell(data.nextWell);
+                }
             } else if (response.status === 404) {
                 await initializeSite();
             }
