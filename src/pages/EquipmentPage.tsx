@@ -17,7 +17,7 @@ import EditSubPhaseModal from '../components/EquipmentPage/EditSubPhaseModal';
 import EditItemModal from '../components/EquipmentPage/EditItemModal';
 import EditWellModal from '../components/EquipmentPage/EditWellModal';
 import { API_ENDPOINTS } from '../config/api';
-import type { Well, Item, Site } from '../types';
+import type { Well, Item, SiteWithWells } from '../types';
 import './EquipmentPage.css';
 
 const EquipmentPage = () => {
@@ -30,7 +30,7 @@ const EquipmentPage = () => {
 
     // State
     const [allWells, setAllWells] = useState<Well[]>([]);
-    const [currentSite, setCurrentSite] = useState<Site | null>(null);
+    const [currentSite, setCurrentSite] = useState<SiteWithWells | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -85,34 +85,38 @@ const EquipmentPage = () => {
         }
     }, [allWells, userRig]);
 
-    // Update active/next wells when site data loads
-    useEffect(() => {
-        if (currentSite && allWells.length > 0) {
-            console.log('Site data:', currentSite); // Debug log
-            console.log('All wells:', allWells); // Debug log
-
-            if (currentSite.activeWell) {
-                // currentSite.activeWell might be an object or a string
-                const activeWellId = typeof currentSite.activeWell === 'object'
-                    ? currentSite.activeWell._id
-                    : currentSite.activeWell;
-
-                const active = allWells.find(w => w._id === activeWellId);
-                console.log('Found active well:', active); // Debug log
-                if (active) setActiveWell(active);
-            }
-
-            if (currentSite.nextWell) {
-                const nextWellId = typeof currentSite.nextWell === 'object'
-                    ? currentSite.nextWell._id
-                    : currentSite.nextWell;
-
-                const next = allWells.find(w => w._id === nextWellId);
-                console.log('Found next well:', next); // Debug log
-                if (next) setNextWell(next);
-            }
-        }
-    }, [currentSite, allWells]);
+// Update active/next wells when site data loads
+useEffect(() => {
+  if (currentSite && allWells.length > 0) {
+    // Handle active well - could be either string ID or populated object
+    if (currentSite.activeWell) {
+      // Check if it's an object with _id property (populated well)
+      if (typeof currentSite.activeWell === 'object' && currentSite.activeWell !== null && '_id' in currentSite.activeWell) {
+        // It's already populated
+        setActiveWell(currentSite.activeWell as Well);
+      } 
+      // Check if it's a string (just the ID)
+      else if (typeof currentSite.activeWell === 'string') {
+        const active = allWells.find(w => w._id === currentSite.activeWell);
+        if (active) setActiveWell(active);
+      }
+    }
+    
+    // Handle next well - could be either string ID or populated object
+    if (currentSite.nextWell) {
+      // Check if it's an object with _id property (populated well)
+      if (typeof currentSite.nextWell === 'object' && currentSite.nextWell !== null && '_id' in currentSite.nextWell) {
+        // It's already populated
+        setNextWell(currentSite.nextWell as Well);
+      } 
+      // Check if it's a string (just the ID)
+      else if (typeof currentSite.nextWell === 'string') {
+        const next = allWells.find(w => w._id === currentSite.nextWell);
+        if (next) setNextWell(next);
+      }
+    }
+  }
+}, [currentSite, allWells]);
 
     const fetchAllWells = async () => {
         try {
@@ -132,7 +136,6 @@ const EquipmentPage = () => {
     const fetchSiteData = async () => {
         try {
             setLoading(true);
-            // Use the endpoint that populates the wells
             const response = await fetch(`${API_ENDPOINTS.SITES}/${userRig}/with-wells`, {
                 headers: {
                     'Authorization': `Bearer ${user?.token}`
@@ -140,11 +143,10 @@ const EquipmentPage = () => {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                console.log('Fetched site data:', data); // Debug log
+                const data: SiteWithWells = await response.json();
+                console.log('Fetched site data:', data);
                 setCurrentSite(data);
             } else if (response.status === 404) {
-                // Site doesn't exist yet, create it
                 await initializeSite();
             }
         } catch (err) {
