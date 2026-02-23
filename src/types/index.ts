@@ -197,3 +197,10 @@ export interface WellAssignment {
   type: WellType;
   well: Well;
 }
+
+export interface EditWellModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  well: Well | null;
+  onSubmit: (wellId: string, wellData: { wellName: string; wellAFE: string }) => void;
+}

@@ -4,7 +4,7 @@ import {
   AppBar, Toolbar, IconButton, Typography, Box, Button, 
   MenuItem, Select, TextField, Popover, FormControl, Divider
 } from '@mui/material';
-import { Settings, Add, Search } from '@mui/icons-material';
+import { Settings, Add, Search, Edit } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import WellColumn from '../components/EquipmentPage/WellColumn';
@@ -15,6 +15,7 @@ import AddItemModal from '../components/EquipmentPage/AddItemModal';
 import EditPhaseModal from '../components/EquipmentPage/EditPhaseModal';
 import EditSubPhaseModal from '../components/EquipmentPage/EditSubPhaseModal';
 import EditItemModal from '../components/EquipmentPage/EditItemModal';
+import EditWellModal from '../components/EquipmentPage/EditWellModal';
 import { API_ENDPOINTS } from '../config/api';
 import type { Well, Item } from '../types';
 import './EquipmentPage.css';
@@ -51,6 +52,7 @@ const EquipmentPage = () => {
   const [editPhaseModalOpen, setEditPhaseModalOpen] = useState(false);
   const [editSubPhaseModalOpen, setEditSubPhaseModalOpen] = useState(false);
   const [editItemModalOpen, setEditItemModalOpen] = useState(false);
+  const [editWellModalOpen, setEditWellModalOpen] = useState(false);
   
   const [selectedWellForPhase, setSelectedWellForPhase] = useState<Well | null>(null);
   const [selectedPhaseForSubPhase, setSelectedPhaseForSubPhase] = useState<{well: Well, phaseIndex: number} | null>(null);
@@ -58,6 +60,7 @@ const EquipmentPage = () => {
   const [editingPhase, setEditingPhase] = useState<{well: Well, phaseIndex: number, phaseName: string} | null>(null);
   const [editingSubPhase, setEditingSubPhase] = useState<{well: Well, phaseIndex: number, subPhaseIndex: number, subPhaseName: string} | null>(null);
   const [editingItem, setEditingItem] = useState<{well: Well, phaseIndex: number, subPhaseIndex: number, itemIndex: number, item: Item} | null>(null);
+  const [editingWell, setEditingWell] = useState<Well | null>(null);
   
   // Search/Filter states
   const [wellSearchAnchor, setWellSearchAnchor] = useState<null | HTMLElement>(null);
@@ -70,28 +73,24 @@ const EquipmentPage = () => {
   }, []);
 
   // Filter wells when userRig changes or wells are loaded
-  useEffect(() => {
-    if (allWells.length > 0 && userRig) {
-      // Filter wells where wellOwner matches user's home location
-      const filtered = allWells.filter(well => 
-        well.wellOwner.toLowerCase() === userRig.toLowerCase()
-      );
-      setUserWells(filtered);
-      
-      // Set active and next wells from filtered list
-      if (filtered.length > 0) {
-        setActiveWell(filtered[0]);
-        if (filtered.length > 1) {
-          setNextWell(filtered[1]);
-        } else {
-          setNextWell(null);
-        }
-      } else {
-        setActiveWell(null);
-        setNextWell(null);
+useEffect(() => {
+  if (allWells.length > 0 && userRig) {
+    // Filter wells where wellOwner matches user's home location
+    const filtered = allWells.filter(well => 
+      well.wellOwner.toLowerCase() === userRig.toLowerCase()
+    );
+    setUserWells(filtered);
+    
+    // Only set initial active/next wells if they're not already set
+    // This prevents overriding user selections
+    if (filtered.length > 0 && !activeWell && !nextWell) {
+      setActiveWell(filtered[0]);
+      if (filtered.length > 1) {
+        setNextWell(filtered[1]);
       }
     }
-  }, [allWells, userRig]);
+  }
+}, [allWells, userRig]);
 
   const fetchAllWells = async () => {
     try {
@@ -345,6 +344,50 @@ const EquipmentPage = () => {
     }
   };
 
+  const handleUpdateWell = async (wellId: string, wellData: { wellName: string; wellAFE: string }) => {
+  try {
+    const well = allWells.find(w => w._id === wellId);
+    if (!well) return;
+
+    const updatedWell = { 
+      ...well, 
+      wellName: wellData.wellName,
+      wellAFE: wellData.wellAFE 
+    };
+
+    const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user?.token}`
+      },
+      body: JSON.stringify(updatedWell)
+    });
+
+    if (response.ok) {
+      const savedWell = await response.json();
+      
+      // Update allWells
+      setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
+      
+      // Update activeWell if it's the one being edited - compare by ID, not object reference
+      if (activeWell && activeWell._id === wellId) {
+        setActiveWell(savedWell);
+      }
+      
+      // Update nextWell if it's the one being edited - compare by ID, not object reference
+      if (nextWell && nextWell._id === wellId) {
+        setNextWell(savedWell);
+      }
+      
+      setEditWellModalOpen(false);
+      setEditingWell(null);
+    }
+  } catch (err) {
+    console.error('Failed to update well:', err);
+  }
+};
+
   const handleMovePhase = (well: Well, phaseIndex: number, direction: 'up' | 'down') => {
     if (!isAdmin) return;
     
@@ -469,12 +512,31 @@ const EquipmentPage = () => {
               </Typography>
               {activeWell && (
                 <>
-                  <Typography variant="h6" className="well-name">
-                    {activeWell.wellName}
-                  </Typography>
-                  <Typography variant="h6" className="well-afe">
-                    : {activeWell.wellAFE}
-                  </Typography>
+                  <Box className="well-name-afe-group">
+                    <Typography variant="h6" className="well-name">
+                      {activeWell.wellName}
+                    </Typography>
+                    <Typography variant="h6" className="well-colon">
+                      :
+                    </Typography>
+                    <Typography variant="h6" className="well-afe">
+                      {activeWell.wellAFE}
+                    </Typography>
+                  </Box>
+                  {/* Edit button after AFE */}
+                  {isAdmin && (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setEditingWell(activeWell);
+                        setEditWellModalOpen(true);
+                      }}
+                      className="well-edit-btn"
+                      title="Edit Well"
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  )}
                 </>
               )}
             </Box>
@@ -580,12 +642,31 @@ const EquipmentPage = () => {
               </Typography>
               {nextWell && (
                 <>
-                  <Typography variant="h6" className="well-name">
-                    {nextWell.wellName}
-                  </Typography>
-                  <Typography variant="h6" className="well-afe">
-                    : {nextWell.wellAFE}
-                  </Typography>
+                  <Box className="well-name-afe-group">
+                    <Typography variant="h6" className="well-name">
+                      {nextWell.wellName}
+                    </Typography>
+                    <Typography variant="h6" className="well-colon">
+                      :
+                    </Typography>
+                    <Typography variant="h6" className="well-afe">
+                      {nextWell.wellAFE}
+                    </Typography>
+                  </Box>
+                  {/* Edit button after AFE */}
+                  {isAdmin && (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setEditingWell(nextWell);
+                        setEditWellModalOpen(true);
+                      }}
+                      className="well-edit-btn"
+                      title="Edit Well"
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  )}
                 </>
               )}
             </Box>
@@ -782,6 +863,16 @@ const EquipmentPage = () => {
         }}
         itemInfo={editingItem}
         onSubmit={handleUpdateItem}
+      />
+
+      <EditWellModal
+        isOpen={editWellModalOpen}
+        onClose={() => {
+          setEditWellModalOpen(false);
+          setEditingWell(null);
+        }}
+        well={editingWell}
+        onSubmit={handleUpdateWell}
       />
     </div>
   );
