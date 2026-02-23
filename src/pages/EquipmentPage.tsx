@@ -73,24 +73,54 @@ const EquipmentPage = () => {
   }, []);
 
   // Filter wells when userRig changes or wells are loaded
-useEffect(() => {
-  if (allWells.length > 0 && userRig) {
-    // Filter wells where wellOwner matches user's home location
-    const filtered = allWells.filter(well => 
-      well.wellOwner.toLowerCase() === userRig.toLowerCase()
-    );
-    setUserWells(filtered);
-    
-    // Only set initial active/next wells if they're not already set
-    // This prevents overriding user selections
-    if (filtered.length > 0 && !activeWell && !nextWell) {
-      setActiveWell(filtered[0]);
-      if (filtered.length > 1) {
-        setNextWell(filtered[1]);
-      }
+  useEffect(() => {
+    if (allWells.length > 0 && userRig) {
+      // Filter wells where wellOwner matches user's home location
+      const filtered = allWells.filter(well => 
+        well.wellOwner.toLowerCase() === userRig.toLowerCase()
+      );
+      setUserWells(filtered);
     }
-  }
-}, [allWells, userRig]);
+  }, [allWells, userRig]);
+
+  // Fetch current site's well assignments
+  useEffect(() => {
+    const fetchSiteWells = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.SITE_WITH_WELLS(userRig), {
+          headers: {
+            'Authorization': `Bearer ${user?.token}`
+          }
+        });
+        
+        if (response.ok) {
+          const site = await response.json();
+          
+          // Find the full well objects from allWells
+          if (site.activeWell && typeof site.activeWell === 'object') {
+            setActiveWell(site.activeWell);
+          } else if (site.activeWell && typeof site.activeWell === 'string') {
+            // If only ID is returned, find the full well object
+            const well = allWells.find(w => w._id === site.activeWell);
+            if (well) setActiveWell(well);
+          }
+          
+          if (site.nextWell && typeof site.nextWell === 'object') {
+            setNextWell(site.nextWell);
+          } else if (site.nextWell && typeof site.nextWell === 'string') {
+            const well = allWells.find(w => w._id === site.nextWell);
+            if (well) setNextWell(well);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch site wells:', err);
+      }
+    };
+
+    if (userRig && allWells.length > 0 && user?.token) {
+      fetchSiteWells();
+    }
+  }, [userRig, allWells, user?.token]);
 
   const fetchAllWells = async () => {
     try {
@@ -110,13 +140,40 @@ useEffect(() => {
     }
   };
 
-  const handleAssignWell = (well: Well, type: 'active' | 'next') => {
-    if (type === 'active') {
-      setActiveWell(well);
-    } else {
-      setNextWell(well);
+  const handleAssignWell = async (well: Well, type: 'active' | 'next') => {
+    try {
+      // Make API call to update the site's well assignment
+      const endpoint = type === 'active' 
+        ? API_ENDPOINTS.SITE_ACTIVE_WELL(userRig)
+        : API_ENDPOINTS.SITE_NEXT_WELL(userRig);
+      
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify({ wellId: well._id })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to assign ${type} well`);
+      }
+
+      // Update local state only after successful API call
+      if (type === 'active') {
+        setActiveWell(well);
+      } else {
+        setNextWell(well);
+      }
+      
+      setWellSearchAnchor(null);
+      
+      console.log(`Successfully assigned ${type} well: ${well.wellName}`);
+      
+    } catch (err) {
+      console.error(`Failed to assign ${type} well:`, err);
     }
-    setWellSearchAnchor(null);
   };
 
   const handleCreateWell = async (wellData: Partial<Well>) => {
@@ -345,48 +402,48 @@ useEffect(() => {
   };
 
   const handleUpdateWell = async (wellId: string, wellData: { wellName: string; wellAFE: string }) => {
-  try {
-    const well = allWells.find(w => w._id === wellId);
-    if (!well) return;
+    try {
+      const well = allWells.find(w => w._id === wellId);
+      if (!well) return;
 
-    const updatedWell = { 
-      ...well, 
-      wellName: wellData.wellName,
-      wellAFE: wellData.wellAFE 
-    };
+      const updatedWell = { 
+        ...well, 
+        wellName: wellData.wellName,
+        wellAFE: wellData.wellAFE 
+      };
 
-    const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user?.token}`
-      },
-      body: JSON.stringify(updatedWell)
-    });
+      const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify(updatedWell)
+      });
 
-    if (response.ok) {
-      const savedWell = await response.json();
-      
-      // Update allWells
-      setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
-      
-      // Update activeWell if it's the one being edited - compare by ID, not object reference
-      if (activeWell && activeWell._id === wellId) {
-        setActiveWell(savedWell);
+      if (response.ok) {
+        const savedWell = await response.json();
+        
+        // Update allWells
+        setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
+        
+        // Update activeWell if it's the one being edited
+        if (activeWell && activeWell._id === wellId) {
+          setActiveWell(savedWell);
+        }
+        
+        // Update nextWell if it's the one being edited
+        if (nextWell && nextWell._id === wellId) {
+          setNextWell(savedWell);
+        }
+        
+        setEditWellModalOpen(false);
+        setEditingWell(null);
       }
-      
-      // Update nextWell if it's the one being edited - compare by ID, not object reference
-      if (nextWell && nextWell._id === wellId) {
-        setNextWell(savedWell);
-      }
-      
-      setEditWellModalOpen(false);
-      setEditingWell(null);
+    } catch (err) {
+      console.error('Failed to update well:', err);
     }
-  } catch (err) {
-    console.error('Failed to update well:', err);
-  }
-};
+  };
 
   const handleMovePhase = (well: Well, phaseIndex: number, direction: 'up' | 'down') => {
     if (!isAdmin) return;
