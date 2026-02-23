@@ -90,8 +90,8 @@ const EquipmentPage = () => {
         if (currentSite && allWells.length > 0) {
             // Handle active well - could be either string ID or populated object
             if (currentSite.activeWell) {
-                // Check if it's an object with _id property (populated well)
-                if (typeof currentSite.activeWell === 'object' && currentSite.activeWell !== null && '_id' in currentSite.activeWell) {
+                // Check if it's an object (populated well)
+                if (typeof currentSite.activeWell === 'object' && currentSite.activeWell !== null) {
                     // It's already populated
                     setActiveWell(currentSite.activeWell as Well);
                 }
@@ -104,8 +104,8 @@ const EquipmentPage = () => {
 
             // Handle next well - could be either string ID or populated object
             if (currentSite.nextWell) {
-                // Check if it's an object with _id property (populated well)
-                if (typeof currentSite.nextWell === 'object' && currentSite.nextWell !== null && '_id' in currentSite.nextWell) {
+                // Check if it's an object (populated well)
+                if (typeof currentSite.nextWell === 'object' && currentSite.nextWell !== null) {
                     // It's already populated
                     setNextWell(currentSite.nextWell as Well);
                 }
