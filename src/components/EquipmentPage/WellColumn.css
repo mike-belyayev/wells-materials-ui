@@ -1,4 +1,5 @@
 /* src/components/EquipmentPage/WellColumn.css */
+
 .well-column {
   display: flex;
   flex-direction: column;
@@ -7,40 +8,80 @@
   background-color: #fff;
 }
 
+/* Scrollable container for phases */
 .phases-container {
   flex: 1;
   overflow-y: auto;
-  display: grid;
-  gap: 8px;
-  align-content: start;
+  overflow-x: hidden;
   padding: 8px;
+  min-height: 0; /* Important for flex scrolling */
 }
 
-/* Grid layouts for different column counts */
-.phases-container.single-column {
-  grid-template-columns: 1fr;
+/* CSS Columns layout for Word-like behavior */
+.phases-container.columns-mode {
+  column-gap: 16px;
+  column-fill: balance; /* Balance content across columns */
+  orphans: 1;
+  widows: 1;
+  /* Remove any height constraints */
+  height: auto;
+  /* Ensure content determines height */
+  max-height: none;
 }
 
-.phases-container.two-columns {
-  grid-template-columns: repeat(2, 1fr);
+.phases-container.columns-mode.cols-1 {
+  column-count: 1;
 }
 
-.phases-container.three-columns {
-  grid-template-columns: repeat(3, 1fr);
+.phases-container.columns-mode.cols-2 {
+  column-count: 2;
 }
 
-.phases-container.four-columns {
-  grid-template-columns: repeat(4, 1fr);
+.phases-container.columns-mode.cols-3 {
+  column-count: 3;
 }
 
+.phases-container.columns-mode.cols-4 {
+  column-count: 4;
+}
+
+/* Phase card - each phase takes its own natural height */
 .phase-card {
   background-color: #dde8ff;
   border: 1px solid blue;
   border-radius: 4px;
   overflow: hidden;
   min-width: 0;
+  margin-bottom: 8px;
+  break-inside: avoid-column; /* Prevent phases from breaking across columns */
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  display: inline-block; /* Helps with column behavior */
+  width: 100%;
+  /* Ensure proper rendering in columns */
+  vertical-align: top;
 }
 
+/* Force reflow when column count changes */
+.phases-container.columns-mode {
+  transform: translateZ(0); /* Force hardware acceleration for smoother transitions */
+  transition: column-count 0.3s ease; /* Smooth transition when changing columns */
+}
+
+/* Ensure subphases don't break across columns */
+.subphase-card {
+  margin-bottom: 4px;
+  background-color: white;
+  border: 1px solid #000000;
+  border-radius: 6px;
+  break-inside: avoid-column; /* Keep subphases together */
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Rest of your existing styles remain the same */
 .phase-header {
   display: flex;
   justify-content: space-between;
@@ -89,13 +130,6 @@
   padding: 4px;
 }
 
-.subphase-card {
-  margin-bottom: 4px;
-  background-color: white;
-  border: 1px solid #000000;
-  border-radius: 6px;
-}
-
 .subphase-header {
   display: flex;
   justify-content: space-between;
@@ -129,6 +163,8 @@
 
 .items-container {
   padding: 4px;
+  max-height: none; /* Allow items to expand naturally */
+  overflow: visible;
 }
 
 .item-card {
@@ -136,6 +172,7 @@
   border-bottom: 1px dashed #eee;
   cursor: pointer;
   transition: all 0.2s ease;
+  break-inside: avoid; /* Keep items with their subphase */
 }
 
 .item-card:last-child {
@@ -273,18 +310,26 @@
 
 /* Scrollbar styling */
 .phases-container::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .phases-container::-webkit-scrollbar-track {
   background: #f1f1f1;
+  border-radius: 4px;
 }
 
 .phases-container::-webkit-scrollbar-thumb {
   background: #888;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .phases-container::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Ensure proper column rendering on all browsers */
+@supports (column-count: 1) {
+  .phases-container.columns-mode {
+    column-fill: balance;
+  }
 }

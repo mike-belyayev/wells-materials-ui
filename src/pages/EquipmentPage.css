@@ -10,12 +10,15 @@
     font-family: Arial, sans-serif;
 }
 
-/* Header Styles */
+/* Header Styles - FIXED at top */
 .equipment-header {
     background-color: #121212 !important;
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .header-toolbar {
@@ -140,21 +143,22 @@
     background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Main Content - SPLIT IN HALF */
+/* Main Content - Split view with independent scrolling */
 .main-content {
     display: flex;
     flex: 1;
-    overflow: hidden;
+    overflow: hidden; /* Prevent main container from scrolling */
     background-color: #e0e0e0;
     gap: 1px;
     position: relative;
     width: 100%;
+    min-height: 0; /* Important for flex children to scroll properly */
 }
 
 .well-section {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden; /* Hide overflow on the section itself */
     background-color: #f5f5f5;
     height: 100%;
     width: 50%;
@@ -166,7 +170,7 @@
     display: none;
 }
 
-/* Well Header */
+/* Well Header - Sticky within each section */
 .well-header {
     display: flex;
     justify-content: space-between;
@@ -177,6 +181,9 @@
     min-height: 48px;
     width: 100%;
     box-sizing: border-box;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 /* Active Well Header - Bright Green */
@@ -424,26 +431,9 @@
     color: #d32f2f;
 }
 
-/* Scrollbar Styles */
-.main-content::-webkit-scrollbar,
-.well-search-results::-webkit-scrollbar {
-    width: 8px;
-}
-
-.main-content::-webkit-scrollbar-track,
-.well-search-results::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.main-content::-webkit-scrollbar-thumb,
-.well-search-results::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-}
-
-.main-content::-webkit-scrollbar-thumb:hover,
-.well-search-results::-webkit-scrollbar-thumb:hover {
-    background: #555;
+/* Ensure the main content doesn't have scrollbars */
+.main-content::-webkit-scrollbar {
+    display: none;
 }
 
 /* Only minimal responsive adjustments - keep 50/50 split */

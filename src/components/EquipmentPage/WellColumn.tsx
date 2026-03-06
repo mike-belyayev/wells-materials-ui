@@ -1,5 +1,5 @@
 // src/components/EquipmentPage/WellColumn.tsx
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { Add, ArrowUpward, ArrowDownward, Edit } from '@mui/icons-material';
 import type { Well, Item } from '../../types';
@@ -32,6 +32,13 @@ const WellColumn: React.FC<WellColumnProps> = ({
   isAdmin
 }) => {
   const [expandedItems, setExpandedItems] = useState<{[key: string]: boolean}>({});
+  const [renderKey, setRenderKey] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Force re-render when column count changes to recalculate column layout
+  useEffect(() => {
+    setRenderKey(prev => prev + 1);
+  }, [columnCount]);
 
   const toggleItem = (itemKey: string) => {
     setExpandedItems(prev => ({
@@ -40,15 +47,9 @@ const WellColumn: React.FC<WellColumnProps> = ({
     }));
   };
 
-  // Calculate grid column class based on columnCount
-  const getGridClass = () => {
-    switch(columnCount) {
-      case 1: return 'single-column';
-      case 2: return 'two-columns';
-      case 3: return 'three-columns';
-      case 4: return 'four-columns';
-      default: return 'two-columns';
-    }
+  // Get column class for CSS columns layout
+  const getColumnClass = () => {
+    return `cols-${columnCount}`;
   };
 
   // Get status colors based on item state
@@ -82,9 +83,12 @@ const WellColumn: React.FC<WellColumnProps> = ({
   };
 
   return (
-    <Box className="well-column">
-      {/* Phases Container with dynamic columns */}
-      <Box className={`phases-container ${getGridClass()}`}>
+    <Box className="well-column" key={renderKey}>
+      {/* Phases Container with CSS columns layout */}
+      <Box 
+        ref={containerRef}
+        className={`phases-container columns-mode ${getColumnClass()}`}
+      >
         {well.wellPhases?.map((phase, phaseIndex) => (
           <Box key={phaseIndex} className="phase-card">
             <Box className="phase-header">
