@@ -197,46 +197,45 @@ const WellColumn: React.FC<WellColumnProps> = ({
                       return (
                         <Box key={itemIndex} className="item-card">
                           {!isExpanded ? (
-                            /* Collapsed view - horizontal layout */
+                            /* Collapsed view - two-line layout */
                             <Box 
                               className="item-content collapsed"
                               onClick={() => toggleItem(itemKey)}
                               sx={{ backgroundColor: statusColors.background }}
                             >
-                              {item.itemQuantity && (
-                                <Typography variant="caption" className="item-quantity">
-                                  {item.itemQuantity}
-                                </Typography>
-                              )}
-                              
-                              <Typography 
-                                variant="body2" 
-                                className="item-name"
-                                sx={{ color: statusColors.text }}
-                              >
-                                {item.itemName}
-                              </Typography>
-
-                              {item.itemLocation && (
-                                <Typography variant="caption" className="item-location">
-                                  {item.itemLocation}
-                                </Typography>
-                              )}
-
-                              {/* Edit button */}
-                              {isAdmin && (
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEditItem(well, phaseIndex, subPhaseIndex, itemIndex, item);
-                                  }}
-                                  className="item-edit-btn"
-                                  title="Edit Item"
+                              {/* Top line: Item name only - full width */}
+                              <Box className="item-collapsed-top">
+                                <Typography 
+                                  variant="body2" 
+                                  className="item-collapsed-name"
+                                  sx={{ color: statusColors.text }}
                                 >
-                                  <Edit fontSize="small" />
-                                </IconButton>
-                              )}
+                                  {item.itemName}
+                                </Typography>
+                              </Box>
+
+                              {/* Bottom line: Quantity left, Location right - labels only when missing */}
+                              <Box className="item-collapsed-bottom">
+                                {item.itemQuantity ? (
+                                  <Typography variant="caption" className="item-collapsed-quantity">
+                                    {item.itemQuantity}
+                                  </Typography>
+                                ) : (
+                                  <Typography variant="caption" className="item-collapsed-quantity-placeholder">
+                                    Qty: —
+                                  </Typography>
+                                )}
+                                
+                                {item.itemLocation ? (
+                                  <Typography variant="caption" className="item-collapsed-location">
+                                    {item.itemLocation}
+                                  </Typography>
+                                ) : (
+                                  <Typography variant="caption" className="item-collapsed-location-placeholder">
+                                    Loc: —
+                                  </Typography>
+                                )}
+                              </Box>
                             </Box>
                           ) : (
                             /* Expanded view - vertical layout */
@@ -245,15 +244,19 @@ const WellColumn: React.FC<WellColumnProps> = ({
                               onClick={() => toggleItem(itemKey)}
                               sx={{ backgroundColor: statusColors.background }}
                             >
-                              {/* Top row: Quantity only */}
+                              {/* Top row: Quantity with label only when missing */}
                               <Box className="item-expanded-top">
-                                {item.itemQuantity && (
+                                {item.itemQuantity ? (
                                   <Typography variant="caption" className="item-expanded-quantity">
-                                    Quantity: {item.itemQuantity}
+                                    {item.itemQuantity}
+                                  </Typography>
+                                ) : (
+                                  <Typography variant="caption" className="item-expanded-quantity-placeholder">
+                                    Qty: —
                                   </Typography>
                                 )}
                                 
-                                {/* Edit button moved to top right */}
+                                {/* Edit button - only visible in expanded state */}
                                 {isAdmin && (
                                   <IconButton
                                     size="small"
@@ -285,11 +288,17 @@ const WellColumn: React.FC<WellColumnProps> = ({
                                 </Typography>
                               )}
 
-                              {/* Bottom row: Location */}
-                              {item.itemLocation && (
+                              {/* Bottom row: Location with label only when missing */}
+                              {item.itemLocation ? (
                                 <Box className="item-expanded-bottom">
                                   <Typography variant="caption" className="item-expanded-location">
                                     <strong>Location:</strong> {item.itemLocation}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Box className="item-expanded-bottom">
+                                  <Typography variant="caption" className="item-expanded-location-placeholder">
+                                    <strong>Location:</strong> —
                                   </Typography>
                                 </Box>
                               )}
