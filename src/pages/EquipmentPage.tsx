@@ -270,6 +270,33 @@ const EquipmentPage = () => {
         }
     };
 
+    const handleDeletePhase = async (wellId: string, phaseIndex: number) => {
+        try {
+            const response = await fetch(API_ENDPOINTS.DELETE_PHASE(wellId, phaseIndex), {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete phase');
+            }
+
+            const data = await response.json();
+            
+            // Update state with the updated well
+            setAllWells(prev => prev.map(w => w._id === wellId ? data.well : w));
+            if (activeWell?._id === wellId) setActiveWell(data.well);
+            if (nextWell?._id === wellId) setNextWell(data.well);
+            
+            console.log('Phase deleted successfully');
+        } catch (err) {
+            console.error('Failed to delete phase:', err);
+            setError('Failed to delete phase. Please try again.');
+        }
+    };
+
     const handleAddSubPhase = async (wellId: string, phaseIndex: number, subPhaseName: string) => {
         try {
             const well = allWells.find(w => w._id === wellId);
@@ -338,6 +365,33 @@ const EquipmentPage = () => {
             }
         } catch (err) {
             console.error('Failed to update subphase:', err);
+        }
+    };
+
+    const handleDeleteSubPhase = async (wellId: string, phaseIndex: number, subPhaseIndex: number) => {
+        try {
+            const response = await fetch(API_ENDPOINTS.DELETE_SUBPHASE(wellId, phaseIndex, subPhaseIndex), {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete subphase');
+            }
+
+            const data = await response.json();
+            
+            // Update state with the updated well
+            setAllWells(prev => prev.map(w => w._id === wellId ? data.well : w));
+            if (activeWell?._id === wellId) setActiveWell(data.well);
+            if (nextWell?._id === wellId) setNextWell(data.well);
+            
+            console.log('Subphase deleted successfully');
+        } catch (err) {
+            console.error('Failed to delete subphase:', err);
+            setError('Failed to delete subphase. Please try again.');
         }
     };
 
@@ -415,6 +469,33 @@ const EquipmentPage = () => {
             }
         } catch (err) {
             console.error('Failed to update item:', err);
+        }
+    };
+
+    const handleDeleteItem = async (wellId: string, phaseIndex: number, subPhaseIndex: number, itemIndex: number) => {
+        try {
+            const response = await fetch(API_ENDPOINTS.DELETE_ITEM(wellId, phaseIndex, subPhaseIndex, itemIndex), {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete item');
+            }
+
+            const data = await response.json();
+            
+            // Update state with the updated well
+            setAllWells(prev => prev.map(w => w._id === wellId ? data.well : w));
+            if (activeWell?._id === wellId) setActiveWell(data.well);
+            if (nextWell?._id === wellId) setNextWell(data.well);
+            
+            console.log('Item deleted successfully');
+        } catch (err) {
+            console.error('Failed to delete item:', err);
+            setError('Failed to delete item. Please try again.');
         }
     };
 
@@ -940,6 +1021,7 @@ const EquipmentPage = () => {
                 }}
                 phaseInfo={editingPhase}
                 onSubmit={handleUpdatePhase}
+                onDelete={isAdmin ? handleDeletePhase : undefined}
             />
 
             <EditSubPhaseModal
@@ -950,6 +1032,7 @@ const EquipmentPage = () => {
                 }}
                 subPhaseInfo={editingSubPhase}
                 onSubmit={handleUpdateSubPhase}
+                onDelete={isAdmin ? handleDeleteSubPhase : undefined}
             />
 
             <EditItemModal
@@ -960,6 +1043,7 @@ const EquipmentPage = () => {
                 }}
                 itemInfo={editingItem}
                 onSubmit={handleUpdateItem}
+                onDelete={isAdmin ? handleDeleteItem : undefined}
             />
 
             <EditWellModal

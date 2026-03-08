@@ -13,8 +13,11 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel
+  InputLabel,
+  Alert,
+  Snackbar
 } from '@mui/material';
+import { Delete } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material';
 import type { Well, Item, ItemStatus } from '../../types';
 
@@ -29,6 +32,7 @@ interface EditItemModalProps {
     item: Item;
   } | null;
   onSubmit: (wellId: string, phaseIndex: number, subPhaseIndex: number, itemIndex: number, itemData: any) => void;
+  onDelete?: (wellId: string, phaseIndex: number, subPhaseIndex: number, itemIndex: number) => void;
 }
 
 const statusOptions = [
@@ -42,7 +46,8 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   isOpen,
   onClose,
   itemInfo,
-  onSubmit
+  onSubmit,
+  onDelete
 }) => {
   const [formData, setFormData] = useState({
     itemName: '',
@@ -52,6 +57,8 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     itemState: 'neutral' as ItemStatus,
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
   useEffect(() => {
     if (itemInfo) {
@@ -107,6 +114,24 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     }
   };
 
+  const handleDeleteClick = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (itemInfo && onDelete) {
+      const { well, phaseIndex, subPhaseIndex, itemIndex } = itemInfo;
+      onDelete(well._id, phaseIndex, subPhaseIndex, itemIndex);
+      setDeleteConfirmOpen(false);
+      setSnackbar({ open: true, message: 'Item deleted successfully' });
+      onClose();
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+  };
+
   if (!itemInfo) return null;
 
   const { well, phaseIndex, subPhaseIndex } = itemInfo;
@@ -114,109 +139,174 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   const subPhase = phase?.subPhases[subPhaseIndex];
 
   return (
-    <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edit Item</DialogTitle>
-      <DialogContent>
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Editing item in: <strong>{well.wellName}</strong> → 
-            <strong>{phase?.phaseName}</strong> → 
-            <strong>{subPhase?.subPhaseName}</strong>
+    <>
+      <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <span>Edit Item</span>
+            {onDelete && (
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                startIcon={<Delete />}
+                onClick={handleDeleteClick}
+                sx={{
+                  borderColor: '#d32f2f',
+                  color: '#d32f2f',
+                  '&:hover': {
+                    backgroundColor: '#d32f2f',
+                    color: 'white',
+                    borderColor: '#d32f2f',
+                  }
+                }}
+              >
+                Delete Item
+              </Button>
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+              Editing item in: <strong>{well.wellName}</strong> → 
+              <strong>{phase?.phaseName}</strong> → 
+              <strong>{subPhase?.subPhaseName}</strong>
+            </Typography>
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  name="itemName"
+                  label="Item Name *"
+                  value={formData.itemName}
+                  onChange={handleChange}
+                  onKeyPress={handleKeyPress}
+                  error={!!errors.itemName}
+                  helperText={errors.itemName}
+                  fullWidth
+                  required
+                  size="small"
+                  autoFocus
+                />
+              </Grid>
+
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  name="itemQuantity"
+                  label="Quantity"
+                  value={formData.itemQuantity}
+                  onChange={handleChange}
+                  onKeyPress={handleKeyPress}
+                  fullWidth
+                  size="small"
+                  placeholder="e.g., 5, 100m, 2 sets"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  name="itemLocation"
+                  label="Location"
+                  value={formData.itemLocation}
+                  onChange={handleChange}
+                  onKeyPress={handleKeyPress}
+                  fullWidth
+                  size="small"
+                  placeholder="e.g., Warehouse A, Site B"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  name="itemDescription"
+                  label="Description"
+                  value={formData.itemDescription}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                  multiline
+                  rows={2}
+                  placeholder="Detailed description of the item"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 6 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="status-label">Status</InputLabel>
+                  <Select
+                    labelId="status-label"
+                    name="itemState"
+                    value={formData.itemState}
+                    onChange={handleStatusChange}
+                    label="Status"
+                  >
+                    {statusOptions.map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ 
+                            width: 12, 
+                            height: 12, 
+                            borderRadius: '50%', 
+                            backgroundColor: option.color 
+                          }} />
+                          {option.label}
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            Update Item
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onClose={handleDeleteCancel} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ color: '#d32f2f' }}>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this item?
           </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+            Item: <strong>{formData.itemName}</strong>
+          </Typography>
+          <Typography variant="caption" color="error" sx={{ mt: 2, display: 'block' }}>
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Just Kidding!</Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            variant="contained" 
+            color="error"
+            startIcon={<Delete />}
+          >
+            Roger That!
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="itemName"
-                label="Item Name *"
-                value={formData.itemName}
-                onChange={handleChange}
-                onKeyPress={handleKeyPress}
-                error={!!errors.itemName}
-                helperText={errors.itemName}
-                fullWidth
-                required
-                size="small"
-                autoFocus
-              />
-            </Grid>
-
-            <Grid size={{ xs: 6 }}>
-              <TextField
-                name="itemQuantity"
-                label="Quantity"
-                value={formData.itemQuantity}
-                onChange={handleChange}
-                onKeyPress={handleKeyPress}
-                fullWidth
-                size="small"
-                placeholder="e.g., 5, 100m, 2 sets"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 6 }}>
-              <TextField
-                name="itemLocation"
-                label="Location"
-                value={formData.itemLocation}
-                onChange={handleChange}
-                onKeyPress={handleKeyPress}
-                fullWidth
-                size="small"
-                placeholder="e.g., Warehouse A, Site B"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="itemDescription"
-                label="Description"
-                value={formData.itemDescription}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-                multiline
-                rows={2}
-                placeholder="Detailed description of the item"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 6 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  name="itemState"
-                  value={formData.itemState}
-                  onChange={handleStatusChange}
-                  label="Status"
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ 
-                          width: 12, 
-                          height: 12, 
-                          borderRadius: '50%', 
-                          backgroundColor: option.color 
-                        }} />
-                        {option.label}
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          Update Item
-        </Button>
-      </DialogActions>
-    </Dialog>
+      {/* Success Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 

@@ -1,9 +1,4 @@
 // ============================================
-// DEVELOPMENT - Local API
-// =============================================
-// const API_BASE_URL = 'http://localhost:3000';
-
-// ============================================
 // PRODUCTION - Vercel API (UNCOMMENT FOR DEPLOYMENT)
 // ============================================
 const API_BASE_URL = 'https://wells-equipment-api.vercel.app';
@@ -35,13 +30,30 @@ export const API_ENDPOINTS = {
   SITE_POB: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}/pob`,
   INITIALIZE_SITES: `${API_BASE_URL}/api/sites/initialize`,
   
-  // ===== NEW WELL ENDPOINTS =====
+  // ===== WELL ENDPOINTS =====
   WELLS: `${API_BASE_URL}/api/wells`,
   WELL_BY_ID: (id: string) => `${API_BASE_URL}/api/wells/${id}`,
   WELL_BY_NAME: (wellName: string) => `${API_BASE_URL}/api/wells/name/${wellName}`,
   WELLS_BY_OWNER: (wellOwner: string) => `${API_BASE_URL}/api/wells/owner/${wellOwner}`,
   WELL_PHASES: (id: string) => `${API_BASE_URL}/api/wells/${id}/phases`,
   WELLS_INITIALIZE: `${API_BASE_URL}/api/wells/initialize`,
+  
+  // ===== PHASE ENDPOINTS =====
+  ADD_PHASE: (wellId: string) => `${API_BASE_URL}/api/wells/${wellId}/phases`,
+  DELETE_PHASE: (wellId: string, phaseIndex: number) => 
+    `${API_BASE_URL}/api/wells/${wellId}/phases/${phaseIndex}`,
+  
+  // ===== SUBPHASE ENDPOINTS =====
+  DELETE_SUBPHASE: (wellId: string, phaseIndex: number, subPhaseIndex: number) => 
+    `${API_BASE_URL}/api/wells/${wellId}/phases/${phaseIndex}/subphases/${subPhaseIndex}`,
+  
+  // ===== ITEM ENDPOINTS =====
+  DELETE_ITEM: (wellId: string, phaseIndex: number, subPhaseIndex: number, itemIndex: number) => 
+    `${API_BASE_URL}/api/wells/${wellId}/phases/${phaseIndex}/subphases/${subPhaseIndex}/items/${itemIndex}`,
+  
+  // ===== BULK OPERATIONS =====
+  DELETE_ALL_PHASE_ITEMS: (wellId: string, phaseIndex: number) => 
+    `${API_BASE_URL}/api/wells/${wellId}/phases/${phaseIndex}/items`,
   
   // ===== SITE-WELL ASSIGNMENT ENDPOINTS =====
   SITE_ACTIVE_WELL: (siteName: string) => `${API_BASE_URL}/api/sites/${siteName}/active-well`,
