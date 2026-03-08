@@ -19,7 +19,7 @@
 
 /* CSS Columns layout for Word-like behavior */
 .phases-container.columns-mode {
-  column-gap: 16px;
+  column-gap: 6px;
   column-fill: balance; /* Balance content across columns */
   orphans: 1;
   widows: 1;
