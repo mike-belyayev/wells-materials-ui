@@ -10,8 +10,7 @@ import {
   Box,
   Alert,
   Tab,
-  Tabs,
-  Divider
+  Tabs
 } from '@mui/material';
 import { Create, ContentCopy } from '@mui/icons-material';
 import CloneWellSelector from './CloneWellSelector';
@@ -108,7 +107,7 @@ const CreateWellModal: React.FC<CreateWellModalProps> = ({
     onClose();
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 

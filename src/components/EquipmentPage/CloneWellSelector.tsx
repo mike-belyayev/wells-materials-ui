@@ -30,7 +30,6 @@ const CloneWellSelector: React.FC<CloneWellSelectorProps> = ({
   isOpen,
   onClose,
   onClone,
-  currentLocation,
   excludeWellIds = []
 }) => {
   const [wells, setWells] = useState<Well[]>([]);
