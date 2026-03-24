@@ -1,3 +1,4 @@
+// src/config/api.ts
 // ============================================
 // PRODUCTION - Vercel API (UNCOMMENT FOR DEPLOYMENT)
 // ============================================
@@ -37,6 +38,7 @@ export const API_ENDPOINTS = {
   WELLS_BY_OWNER: (wellOwner: string) => `${API_BASE_URL}/api/wells/owner/${wellOwner}`,
   WELL_PHASES: (id: string) => `${API_BASE_URL}/api/wells/${id}/phases`,
   WELLS_INITIALIZE: `${API_BASE_URL}/api/wells/initialize`,
+  CLONE_WELL: (wellId: string) => `${API_BASE_URL}/api/wells/${wellId}/clone`, // Added clone endpoint
   
   // ===== PHASE ENDPOINTS =====
   ADD_PHASE: (wellId: string) => `${API_BASE_URL}/api/wells/${wellId}/phases`,

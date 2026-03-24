@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import {
     AppBar, Toolbar, IconButton, Typography, Box, Button,
-    MenuItem, Select, TextField, Popover, FormControl, Divider
+    MenuItem, Select, TextField, Popover, FormControl, Divider, Snackbar, Alert
 } from '@mui/material';
 import { Settings, Add, Search, Edit } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +33,11 @@ const EquipmentPage = () => {
     const [currentSite, setCurrentSite] = useState<SiteWithPopulatedWells | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
 
     // Wells filtered by current user's rig (wellOwner)
     const [userWells, setUserWells] = useState<Well[]>([]);
@@ -103,7 +108,7 @@ const EquipmentPage = () => {
     const fetchSiteData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_ENDPOINTS.SITES}/${userRig}/with-wells`, {
+            const response = await fetch(API_ENDPOINTS.SITE_WITH_WELLS(userRig), {
                 headers: {
                     'Authorization': `Bearer ${user?.token}`
                 }
@@ -186,10 +191,12 @@ const EquipmentPage = () => {
             }
 
             setWellSearchAnchor(null);
+            showSnackbar(`${type === 'active' ? 'Active' : 'Next'} well assigned successfully`, 'success');
 
         } catch (err) {
             console.error(`Failed to assign ${type} well:`, err);
             setError(`Failed to assign ${type} well. Please try again.`);
+            showSnackbar(`Failed to assign ${type} well`, 'error');
         }
     };
 
@@ -211,9 +218,43 @@ const EquipmentPage = () => {
                 const newWell = await response.json();
                 setAllWells(prev => [...prev, newWell]);
                 setCreateWellModalOpen(false);
+                showSnackbar(`Well "${newWell.wellName}" created successfully`, 'success');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create well');
             }
         } catch (err) {
             console.error('Failed to create well:', err);
+            showSnackbar(err instanceof Error ? err.message : 'Failed to create well', 'error');
+        }
+    };
+
+    const handleCloneWell = async (wellId: string) => {
+        try {
+            const response = await fetch(API_ENDPOINTS.CLONE_WELL(wellId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to clone well');
+            }
+
+            const data = await response.json();
+            console.log('Well cloned successfully:', data.clonedWell);
+            
+            // Add the cloned well to the allWells state
+            setAllWells(prev => [...prev, data.clonedWell]);
+            
+            showSnackbar(`Well cloned successfully: ${data.clonedWell.wellName}`, 'success');
+            
+        } catch (err) {
+            console.error('Failed to clone well:', err);
+            showSnackbar(err instanceof Error ? err.message : 'Failed to clone well', 'error');
         }
     };
 
@@ -234,9 +275,11 @@ const EquipmentPage = () => {
                 if (activeWell?._id === wellId) setActiveWell(updatedWell);
                 if (nextWell?._id === wellId) setNextWell(updatedWell);
                 setAddPhaseModalOpen(false);
+                showSnackbar(`Phase "${phaseName}" added successfully`, 'success');
             }
         } catch (err) {
             console.error('Failed to add phase:', err);
+            showSnackbar('Failed to add phase', 'error');
         }
     };
 
@@ -264,9 +307,11 @@ const EquipmentPage = () => {
                 if (nextWell?._id === wellId) setNextWell(savedWell);
                 setEditPhaseModalOpen(false);
                 setEditingPhase(null);
+                showSnackbar(`Phase updated successfully`, 'success');
             }
         } catch (err) {
             console.error('Failed to update phase:', err);
+            showSnackbar('Failed to update phase', 'error');
         }
     };
 
@@ -290,10 +335,11 @@ const EquipmentPage = () => {
             if (activeWell?._id === wellId) setActiveWell(data.well);
             if (nextWell?._id === wellId) setNextWell(data.well);
             
-            console.log('Phase deleted successfully');
+            showSnackbar('Phase deleted successfully', 'success');
         } catch (err) {
             console.error('Failed to delete phase:', err);
             setError('Failed to delete phase. Please try again.');
+            showSnackbar('Failed to delete phase', 'error');
         }
     };
 
@@ -327,9 +373,11 @@ const EquipmentPage = () => {
                 if (activeWell?._id === wellId) setActiveWell(savedWell);
                 if (nextWell?._id === wellId) setNextWell(savedWell);
                 setAddSubPhaseModalOpen(false);
+                showSnackbar(`Subphase "${subPhaseName}" added successfully`, 'success');
             }
         } catch (err) {
             console.error('Failed to add subphase:', err);
+            showSnackbar('Failed to add subphase', 'error');
         }
     };
 
@@ -362,9 +410,11 @@ const EquipmentPage = () => {
                 if (nextWell?._id === wellId) setNextWell(savedWell);
                 setEditSubPhaseModalOpen(false);
                 setEditingSubPhase(null);
+                showSnackbar('Subphase updated successfully', 'success');
             }
         } catch (err) {
             console.error('Failed to update subphase:', err);
+            showSnackbar('Failed to update subphase', 'error');
         }
     };
 
@@ -388,10 +438,11 @@ const EquipmentPage = () => {
             if (activeWell?._id === wellId) setActiveWell(data.well);
             if (nextWell?._id === wellId) setNextWell(data.well);
             
-            console.log('Subphase deleted successfully');
+            showSnackbar('Subphase deleted successfully', 'success');
         } catch (err) {
             console.error('Failed to delete subphase:', err);
             setError('Failed to delete subphase. Please try again.');
+            showSnackbar('Failed to delete subphase', 'error');
         }
     };
 
@@ -427,9 +478,11 @@ const EquipmentPage = () => {
                 if (activeWell?._id === wellId) setActiveWell(savedWell);
                 if (nextWell?._id === wellId) setNextWell(savedWell);
                 setAddItemModalOpen(false);
+                showSnackbar('Item added successfully', 'success');
             }
         } catch (err) {
             console.error('Failed to add item:', err);
+            showSnackbar('Failed to add item', 'error');
         }
     };
 
@@ -466,9 +519,11 @@ const EquipmentPage = () => {
                 if (nextWell?._id === wellId) setNextWell(savedWell);
                 setEditItemModalOpen(false);
                 setEditingItem(null);
+                showSnackbar('Item updated successfully', 'success');
             }
         } catch (err) {
             console.error('Failed to update item:', err);
+            showSnackbar('Failed to update item', 'error');
         }
     };
 
@@ -492,10 +547,11 @@ const EquipmentPage = () => {
             if (activeWell?._id === wellId) setActiveWell(data.well);
             if (nextWell?._id === wellId) setNextWell(data.well);
             
-            console.log('Item deleted successfully');
+            showSnackbar('Item deleted successfully', 'success');
         } catch (err) {
             console.error('Failed to delete item:', err);
             setError('Failed to delete item. Please try again.');
+            showSnackbar('Failed to delete item', 'error');
         }
     };
 
@@ -560,9 +616,11 @@ const EquipmentPage = () => {
 
                 setEditWellModalOpen(false);
                 setEditingWell(null);
+                showSnackbar('Well updated successfully', 'success');
             }
         } catch (err) {
             console.error('Failed to update well:', err);
+            showSnackbar('Failed to update well', 'error');
         }
     };
 
@@ -589,8 +647,12 @@ const EquipmentPage = () => {
                 setAllWells(prev => prev.map(w => w._id === well._id ? updatedWell : w));
                 if (activeWell?._id === well._id) setActiveWell(updatedWell);
                 if (nextWell?._id === well._id) setNextWell(updatedWell);
+                showSnackbar('Phase reordered successfully', 'success');
             }
-        }).catch(err => console.error('Failed to reorder phases:', err));
+        }).catch(err => {
+            console.error('Failed to reorder phases:', err);
+            showSnackbar('Failed to reorder phases', 'error');
+        });
     };
 
     const handleMoveSubPhase = (well: Well, phaseIndex: number, subPhaseIndex: number, direction: 'up' | 'down') => {
@@ -616,8 +678,20 @@ const EquipmentPage = () => {
                 setAllWells(prev => prev.map(w => w._id === well._id ? updatedWell : w));
                 if (activeWell?._id === well._id) setActiveWell(updatedWell);
                 if (nextWell?._id === well._id) setNextWell(updatedWell);
+                showSnackbar('Subphase reordered successfully', 'success');
             }
-        }).catch(err => console.error('Failed to reorder subphases:', err));
+        }).catch(err => {
+            console.error('Failed to reorder subphases:', err);
+            showSnackbar('Failed to reorder subphases', 'error');
+        });
+    };
+
+    const showSnackbar = (message: string, severity: 'success' | 'error') => {
+        setSnackbar({ open: true, message, severity });
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
     };
 
     // Filter wells for search
@@ -980,7 +1054,9 @@ const EquipmentPage = () => {
                 isOpen={createWellModalOpen}
                 onClose={() => setCreateWellModalOpen(false)}
                 onSubmit={handleCreateWell}
+                onCloneWell={handleCloneWell}
                 currentLocation={userRig}
+                loading={loading}
             />
 
             <AddPhaseModal
@@ -1055,6 +1131,18 @@ const EquipmentPage = () => {
                 well={editingWell}
                 onSubmit={handleUpdateWell}
             />
+
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </div>
     );
 };
