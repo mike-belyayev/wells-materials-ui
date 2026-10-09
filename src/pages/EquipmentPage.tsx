@@ -1,10 +1,9 @@
-// src/pages/EquipmentPage.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
     AppBar, Toolbar, IconButton, Typography, Box, Button,
     MenuItem, Select, TextField, Popover, FormControl, Divider, Snackbar, Alert
 } from '@mui/material';
-import { Settings, Add, Search, Edit } from '@mui/icons-material';
+import { Settings, Add, Search, Edit, Refresh } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import WellColumn from '../components/EquipmentPage/WellColumn';
@@ -19,6 +18,9 @@ import EditWellModal from '../components/EquipmentPage/EditWellModal';
 import { API_ENDPOINTS } from '../config/api';
 import type { Well, Item, SiteWithPopulatedWells } from '../types';
 import './EquipmentPage.css';
+
+// Auto refresh interval in seconds (15 minutes)
+const AUTO_REFRESH_INTERVAL = 15 * 60; 
 
 const EquipmentPage = () => {
     const { logout, user } = useAuth();
@@ -38,6 +40,11 @@ const EquipmentPage = () => {
         message: '',
         severity: 'success'
     });
+
+    // --- NEW REFRESH STATE ---
+    const [timeLeft, setTimeLeft] = useState(AUTO_REFRESH_INTERVAL);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Wells filtered by current user's rig (wellOwner)
     const [userWells, setUserWells] = useState<Well[]>([]);
@@ -73,84 +80,17 @@ const EquipmentPage = () => {
     const [wellSearchType, setWellSearchType] = useState<'active' | 'next' | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Fetch wells and site data on mount
-    useEffect(() => {
-        fetchAllWells();
-        fetchSiteData();
-    }, []);
+    // --- DATA FETCHING FUNCTIONS (Wrapped in useCallback for timer stability) ---
 
-    // Filter wells when userRig changes or wells are loaded
-    useEffect(() => {
-        if (allWells.length > 0 && userRig) {
-            // Filter wells where wellOwner matches user's home location
-            const filtered = allWells.filter(well =>
-                well.wellOwner.toLowerCase() === userRig.toLowerCase()
-            );
-            setUserWells(filtered);
-        }
-    }, [allWells, userRig]);
-
-    const fetchAllWells = async () => {
+    const initializeSite = useCallback(async () => {
         try {
-            const response = await fetch(API_ENDPOINTS.WELLS, {
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`
-                }
-            });
-            if (!response.ok) throw new Error('Failed to fetch wells');
-            const data = await response.json();
-            setAllWells(data);
-        } catch (err) {
-            console.error('Failed to fetch wells:', err);
-        }
-    };
-
-    const fetchSiteData = async () => {
-        try {
-            setLoading(true);
-            const response = await fetch(API_ENDPOINTS.SITE_WITH_WELLS(userRig), {
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`
-                }
-            });
-
-            if (response.ok) {
-                const data: SiteWithPopulatedWells = await response.json();
-                console.log('Fetched site data:', data);
-                setCurrentSite(data);
-
-                // Set active and next wells directly from the populated data
-                if (data.activeWell) {
-                    setActiveWell(data.activeWell);
-                }
-                if (data.nextWell) {
-                    setNextWell(data.nextWell);
-                }
-            } else if (response.status === 404) {
-                await initializeSite();
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch site data');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const initializeSite = async () => {
-        try {
-            // First try to initialize all sites
             await fetch(API_ENDPOINTS.INITIALIZE_SITES, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`
-                }
+                headers: { 'Authorization': `Bearer ${user?.token}` }
             });
 
-            // Then fetch the specific site
             const response = await fetch(API_ENDPOINTS.SITE_WITH_WELLS(userRig), {
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`
-                }
+                headers: { 'Authorization': `Bearer ${user?.token}` }
             });
 
             if (response.ok) {
@@ -160,39 +100,129 @@ const EquipmentPage = () => {
         } catch (err) {
             console.error('Failed to initialize site:', err);
         }
-    };
+    }, [userRig, user?.token]);
 
-    const handleAssignWell = async (well: Well, type: 'active' | 'next') => {
+    const fetchAllWells = useCallback(async () => {
         try {
-            const endpoint = type === 'active'
-                ? API_ENDPOINTS.SITE_ACTIVE_WELL(userRig)
-                : API_ENDPOINTS.SITE_NEXT_WELL(userRig);
+            const response = await fetch(API_ENDPOINTS.WELLS, {
+                headers: { 'Authorization': `Bearer ${user?.token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch wells');
+            const data = await response.json();
+            setAllWells(data);
+        } catch (err) {
+            console.error('Failed to fetch wells:', err);
+        }
+    }, [user?.token]);
 
-            const response = await fetch(endpoint, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
-                body: JSON.stringify({ wellId: well._id })
+    const fetchSiteData = useCallback(async (showLoadingSpinner = false) => {
+        try {
+            if (showLoadingSpinner) setLoading(true);
+            const response = await fetch(API_ENDPOINTS.SITE_WITH_WELLS(userRig), {
+                headers: { 'Authorization': `Bearer ${user?.token}` }
             });
 
-            if (!response.ok) {
-                throw new Error(`Failed to assign ${type} well`);
+            if (response.ok) {
+                const data: SiteWithPopulatedWells = await response.json();
+                setCurrentSite(data);
+                if (data.activeWell) setActiveWell(data.activeWell);
+                if (data.nextWell) setNextWell(data.nextWell);
+                return true;
+            } else if (response.status === 404) {
+                await initializeSite();
+                return true;
             }
+            return false;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch site data');
+            return false;
+        } finally {
+            if (showLoadingSpinner) setLoading(false);
+        }
+    }, [userRig, user?.token, initializeSite]);
 
+    // Master refresh function
+    const handleRefreshData = useCallback(async (isManual = false) => {
+        setTimeLeft(AUTO_REFRESH_INTERVAL); // Reset timer
+        const success = await fetchSiteData(isManual); // Fetch Site
+        await fetchAllWells(); // Fetch Wells
+        
+        if (success) {
+            setLastUpdated(new Date()); // Update timestamp only on success
+        }
+    }, [fetchSiteData, fetchAllWells]);
+
+    // Initial fetch on mount
+    useEffect(() => {
+        handleRefreshData(true);
+    }, [handleRefreshData]);
+
+    // Timer Effect for Auto-Refresh
+    useEffect(() => {
+        timerRef.current = setInterval(() => {
+            setTimeLeft((prevTime) => {
+                if (prevTime <= 1) {
+                    handleRefreshData(false); // Trigger background refresh
+                    return AUTO_REFRESH_INTERVAL;
+                }
+                return prevTime - 1;
+            });
+        }, 1000);
+
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
+    }, [handleRefreshData]);
+
+    // Filter wells when userRig changes or wells are loaded
+    useEffect(() => {
+        if (allWells.length > 0 && userRig) {
+            const filtered = allWells.filter(well =>
+                well.wellOwner.toLowerCase() === userRig.toLowerCase()
+            );
+            setUserWells(filtered);
+        }
+    }, [allWells, userRig]);
+
+    // --- HELPERS ---
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleString('en-US', {
+            weekday: 'short', month: 'short', day: 'numeric',
+            year: 'numeric', hour: '2-digit', minute: '2-digit',
+            second: '2-digit', hour12: true
+        });
+    };
+
+    const showSnackbar = (message: string, severity: 'success' | 'error') => {
+        setSnackbar({ open: true, message, severity });
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
+    };
+
+    // --- EXISTING MUTATION HANDLERS (Untouched) ---
+    const handleAssignWell = async (well: Well, type: 'active' | 'next') => {
+        try {
+            const endpoint = type === 'active' ? API_ENDPOINTS.SITE_ACTIVE_WELL(userRig) : API_ENDPOINTS.SITE_NEXT_WELL(userRig);
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
+                body: JSON.stringify({ wellId: well._id })
+            });
+            if (!response.ok) throw new Error(`Failed to assign ${type} well`);
             const updatedSite = await response.json();
             setCurrentSite(updatedSite);
-
-            if (type === 'active') {
-                setActiveWell(well);
-            } else {
-                setNextWell(well);
-            }
-
+            if (type === 'active') setActiveWell(well);
+            else setNextWell(well);
             setWellSearchAnchor(null);
             showSnackbar(`${type === 'active' ? 'Active' : 'Next'} well assigned successfully`, 'success');
-
         } catch (err) {
             console.error(`Failed to assign ${type} well:`, err);
             setError(`Failed to assign ${type} well. Please try again.`);
@@ -204,16 +234,9 @@ const EquipmentPage = () => {
         try {
             const response = await fetch(API_ENDPOINTS.WELLS, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
-                body: JSON.stringify({
-                    ...wellData,
-                    wellOwner: userRig
-                })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
+                body: JSON.stringify({ ...wellData, wellOwner: userRig })
             });
-
             if (response.ok) {
                 const newWell = await response.json();
                 setAllWells(prev => [...prev, newWell]);
@@ -233,25 +256,15 @@ const EquipmentPage = () => {
         try {
             const response = await fetch(API_ENDPOINTS.CLONE_WELL(wellId), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                }
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` }
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to clone well');
             }
-
             const data = await response.json();
-            console.log('Well cloned successfully:', data.clonedWell);
-            
-            // Add the cloned well to the allWells state
             setAllWells(prev => [...prev, data.clonedWell]);
-            
             showSnackbar(`Well cloned successfully: ${data.clonedWell.wellName}`, 'success');
-            
         } catch (err) {
             console.error('Failed to clone well:', err);
             showSnackbar(err instanceof Error ? err.message : 'Failed to clone well', 'error');
@@ -262,13 +275,9 @@ const EquipmentPage = () => {
         try {
             const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}/phases`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
                 body: JSON.stringify({ phaseName })
             });
-
             if (response.ok) {
                 const updatedWell = await response.json();
                 setAllWells(prev => prev.map(w => w._id === wellId ? updatedWell : w));
@@ -287,19 +296,13 @@ const EquipmentPage = () => {
         try {
             const well = allWells.find(w => w._id === wellId);
             if (!well) return;
-
             const updatedWell = { ...well };
             updatedWell.wellPhases[phaseIndex].phaseName = newPhaseName;
-
             const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
                 body: JSON.stringify(updatedWell)
             });
-
             if (response.ok) {
                 const savedWell = await response.json();
                 setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
@@ -319,22 +322,13 @@ const EquipmentPage = () => {
         try {
             const response = await fetch(API_ENDPOINTS.DELETE_PHASE(wellId, phaseIndex), {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`
-                }
+                headers: { 'Authorization': `Bearer ${user?.token}` }
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete phase');
-            }
-
+            if (!response.ok) throw new Error('Failed to delete phase');
             const data = await response.json();
-            
-            // Update state with the updated well
             setAllWells(prev => prev.map(w => w._id === wellId ? data.well : w));
             if (activeWell?._id === wellId) setActiveWell(data.well);
             if (nextWell?._id === wellId) setNextWell(data.well);
-            
             showSnackbar('Phase deleted successfully', 'success');
         } catch (err) {
             console.error('Failed to delete phase:', err);
@@ -347,26 +341,16 @@ const EquipmentPage = () => {
         try {
             const well = allWells.find(w => w._id === wellId);
             if (!well) return;
-
             const updatedWell = { ...well };
             if (!updatedWell.wellPhases[phaseIndex]?.subPhases) {
                 updatedWell.wellPhases[phaseIndex].subPhases = [];
             }
-
-            updatedWell.wellPhases[phaseIndex].subPhases.push({
-                subPhaseName,
-                items: []
-            });
-
+            updatedWell.wellPhases[phaseIndex].subPhases.push({ subPhaseName, items: [] });
             const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
                 body: JSON.stringify(updatedWell)
             });
-
             if (response.ok) {
                 const savedWell = await response.json();
                 setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
@@ -381,28 +365,17 @@ const EquipmentPage = () => {
         }
     };
 
-    const handleUpdateSubPhase = async (
-        wellId: string,
-        phaseIndex: number,
-        subPhaseIndex: number,
-        newSubPhaseName: string
-    ) => {
+    const handleUpdateSubPhase = async (wellId: string, phaseIndex: number, subPhaseIndex: number, newSubPhaseName: string) => {
         try {
             const well = allWells.find(w => w._id === wellId);
             if (!well) return;
-
             const updatedWell = { ...well };
             updatedWell.wellPhases[phaseIndex].subPhases[subPhaseIndex].subPhaseName = newSubPhaseName;
-
             const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
                 body: JSON.stringify(updatedWell)
             });
-
             if (response.ok) {
                 const savedWell = await response.json();
                 setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
@@ -422,22 +395,13 @@ const EquipmentPage = () => {
         try {
             const response = await fetch(API_ENDPOINTS.DELETE_SUBPHASE(wellId, phaseIndex, subPhaseIndex), {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`
-                }
+                headers: { 'Authorization': `Bearer ${user?.token}` }
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete subphase');
-            }
-
+            if (!response.ok) throw new Error('Failed to delete subphase');
             const data = await response.json();
-            
-            // Update state with the updated well
             setAllWells(prev => prev.map(w => w._id === wellId ? data.well : w));
             if (activeWell?._id === wellId) setActiveWell(data.well);
             if (nextWell?._id === wellId) setNextWell(data.well);
-            
             showSnackbar('Subphase deleted successfully', 'success');
         } catch (err) {
             console.error('Failed to delete subphase:', err);
@@ -446,32 +410,20 @@ const EquipmentPage = () => {
         }
     };
 
-    const handleAddItem = async (
-        wellId: string,
-        phaseIndex: number,
-        subPhaseIndex: number,
-        itemData: any
-    ) => {
+    const handleAddItem = async (wellId: string, phaseIndex: number, subPhaseIndex: number, itemData: any) => {
         try {
             const well = allWells.find(w => w._id === wellId);
             if (!well) return;
-
             const updatedWell = { ...well };
             if (!updatedWell.wellPhases[phaseIndex]?.subPhases[subPhaseIndex]?.items) {
                 updatedWell.wellPhases[phaseIndex].subPhases[subPhaseIndex].items = [];
             }
-
             updatedWell.wellPhases[phaseIndex].subPhases[subPhaseIndex].items.push(itemData);
-
             const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
                 body: JSON.stringify(updatedWell)
             });
-
             if (response.ok) {
                 const savedWell = await response.json();
                 setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
@@ -486,32 +438,20 @@ const EquipmentPage = () => {
         }
     };
 
-    const handleUpdateItem = async (
-        wellId: string,
-        phaseIndex: number,
-        subPhaseIndex: number,
-        itemIndex: number,
-        itemData: any
-    ) => {
+    const handleUpdateItem = async (wellId: string, phaseIndex: number, subPhaseIndex: number, itemIndex: number, itemData: any) => {
         try {
             const well = allWells.find(w => w._id === wellId);
             if (!well) return;
-
             const updatedWell = { ...well };
             updatedWell.wellPhases[phaseIndex].subPhases[subPhaseIndex].items[itemIndex] = {
                 ...updatedWell.wellPhases[phaseIndex].subPhases[subPhaseIndex].items[itemIndex],
                 ...itemData
             };
-
             const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
                 body: JSON.stringify(updatedWell)
             });
-
             if (response.ok) {
                 const savedWell = await response.json();
                 setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
@@ -531,22 +471,13 @@ const EquipmentPage = () => {
         try {
             const response = await fetch(API_ENDPOINTS.DELETE_ITEM(wellId, phaseIndex, subPhaseIndex, itemIndex), {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`
-                }
+                headers: { 'Authorization': `Bearer ${user?.token}` }
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete item');
-            }
-
+            if (!response.ok) throw new Error('Failed to delete item');
             const data = await response.json();
-            
-            // Update state with the updated well
             setAllWells(prev => prev.map(w => w._id === wellId ? data.well : w));
             if (activeWell?._id === wellId) setActiveWell(data.well);
             if (nextWell?._id === wellId) setNextWell(data.well);
-            
             showSnackbar('Item deleted successfully', 'success');
         } catch (err) {
             console.error('Failed to delete item:', err);
@@ -559,61 +490,28 @@ const EquipmentPage = () => {
         try {
             const well = allWells.find(w => w._id === wellId);
             if (!well) return;
-
-            const updatedWell = {
-                ...well,
-                wellName: wellData.wellName,
-                wellAFE: wellData.wellAFE
-            };
-
+            const updatedWell = { ...well, wellName: wellData.wellName, wellAFE: wellData.wellAFE };
             const response = await fetch(`${API_ENDPOINTS.WELLS}/${wellId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
                 body: JSON.stringify(updatedWell)
             });
-
             if (response.ok) {
                 const savedWell = await response.json();
-
-                // Update allWells
                 setAllWells(prev => prev.map(w => w._id === wellId ? savedWell : w));
+                if (activeWell && activeWell._id === wellId) setActiveWell(savedWell);
+                if (nextWell && nextWell._id === wellId) setNextWell(savedWell);
 
-                // Update activeWell if it's the one being edited
-                if (activeWell && activeWell._id === wellId) {
-                    setActiveWell(savedWell);
-                }
-
-                // Update nextWell if it's the one being edited
-                if (nextWell && nextWell._id === wellId) {
-                    setNextWell(savedWell);
-                }
-
-                // Also update the site data to ensure consistency
                 if (currentSite) {
                     const updatedSite = { ...currentSite };
-
-                    // Check if activeWell exists and is an object before accessing _id
-                    if (currentSite.activeWell &&
-                        typeof currentSite.activeWell === 'object' &&
-                        '_id' in currentSite.activeWell &&
-                        currentSite.activeWell._id === wellId) {
+                    if (currentSite.activeWell && typeof currentSite.activeWell === 'object' && '_id' in currentSite.activeWell && currentSite.activeWell._id === wellId) {
                         updatedSite.activeWell = savedWell;
                     }
-
-                    // Check if nextWell exists and is an object before accessing _id
-                    if (currentSite.nextWell &&
-                        typeof currentSite.nextWell === 'object' &&
-                        '_id' in currentSite.nextWell &&
-                        currentSite.nextWell._id === wellId) {
+                    if (currentSite.nextWell && typeof currentSite.nextWell === 'object' && '_id' in currentSite.nextWell && currentSite.nextWell._id === wellId) {
                         updatedSite.nextWell = savedWell;
                     }
-
                     setCurrentSite(updatedSite);
                 }
-
                 setEditWellModalOpen(false);
                 setEditingWell(null);
                 showSnackbar('Well updated successfully', 'success');
@@ -626,21 +524,15 @@ const EquipmentPage = () => {
 
     const handleMovePhase = (well: Well, phaseIndex: number, direction: 'up' | 'down') => {
         if (!isAdmin) return;
-
         const newPhaseIndex = direction === 'up' ? phaseIndex - 1 : phaseIndex + 1;
         if (newPhaseIndex < 0 || newPhaseIndex >= well.wellPhases.length) return;
-
         const updatedWell = { ...well };
         const phases = [...updatedWell.wellPhases];
         [phases[phaseIndex], phases[newPhaseIndex]] = [phases[newPhaseIndex], phases[phaseIndex]];
         updatedWell.wellPhases = phases;
-
         fetch(`${API_ENDPOINTS.WELLS}/${well._id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user?.token}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
             body: JSON.stringify(updatedWell)
         }).then(response => {
             if (response.ok) {
@@ -657,21 +549,15 @@ const EquipmentPage = () => {
 
     const handleMoveSubPhase = (well: Well, phaseIndex: number, subPhaseIndex: number, direction: 'up' | 'down') => {
         if (!isAdmin) return;
-
         const newSubPhaseIndex = direction === 'up' ? subPhaseIndex - 1 : subPhaseIndex + 1;
         if (newSubPhaseIndex < 0 || newSubPhaseIndex >= well.wellPhases[phaseIndex].subPhases.length) return;
-
         const updatedWell = { ...well };
         const subPhases = [...updatedWell.wellPhases[phaseIndex].subPhases];
         [subPhases[subPhaseIndex], subPhases[newSubPhaseIndex]] = [subPhases[newSubPhaseIndex], subPhases[subPhaseIndex]];
         updatedWell.wellPhases[phaseIndex].subPhases = subPhases;
-
         fetch(`${API_ENDPOINTS.WELLS}/${well._id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user?.token}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
             body: JSON.stringify(updatedWell)
         }).then(response => {
             if (response.ok) {
@@ -686,15 +572,6 @@ const EquipmentPage = () => {
         });
     };
 
-    const showSnackbar = (message: string, severity: 'success' | 'error') => {
-        setSnackbar({ open: true, message, severity });
-    };
-
-    const handleCloseSnackbar = () => {
-        setSnackbar({ ...snackbar, open: false });
-    };
-
-    // Filter wells for search
     const filteredWells = userWells.filter(well =>
         well.wellName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         well.wellAFE.toLowerCase().includes(searchTerm.toLowerCase())
@@ -708,7 +585,7 @@ const EquipmentPage = () => {
             {/* Header */}
             <AppBar position="static" className="equipment-header">
                 <Toolbar className="header-toolbar">
-                    <Box className="header-left">
+                    <Box className="header-left" sx={{ display: 'flex', alignItems: 'center' }}>
                         <Typography variant="h6" className="header-title">
                             Wells Equipment List - {userRig}
                         </Typography>
@@ -721,13 +598,59 @@ const EquipmentPage = () => {
                                 startIcon={<Add />}
                                 onClick={() => setCreateWellModalOpen(true)}
                                 className="create-well-btn"
+                                sx={{ ml: 2 }}
                             >
                                 New Well
                             </Button>
                         )}
+
+                        {/* --- REFRESH CONTROLS --- */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 3, gap: 1 }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                startIcon={<Refresh />}
+                                onClick={() => handleRefreshData(true)}
+                                disabled={loading}
+                                sx={{ 
+                                    backgroundColor: '#1976d2', 
+                                    '&:hover': { backgroundColor: '#115293' },
+                                    textTransform: 'none'
+                                }}
+                            >
+                                Refresh Data
+                            </Button>
+
+                            <Box sx={{ 
+                                backgroundColor: '#f57c00', 
+                                color: 'white', 
+                                padding: '4px 8px', 
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                                Auto: {formatTime(timeLeft)}
+                            </Box>
+                        </Box>
                     </Box>
 
-                    <Box className="header-right">
+                    <Box className="header-right" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        
+                        {/* --- LAST UPDATED DISPLAY --- */}
+                        {lastUpdated && (
+                            <Typography variant="body2" sx={{ color: '#4caf50', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                Updated: {formatDate(lastUpdated)}
+                                <Refresh 
+                                    fontSize="small" 
+                                    sx={{ cursor: 'pointer', opacity: 0.7, '&:hover': { opacity: 1 } }} 
+                                    onClick={() => handleRefreshData(true)}
+                                />
+                            </Typography>
+                        )}
+
                         <Box className="dev-credit">
                             <Typography variant="caption">App developed for Wells Team by:</Typography>
                             <Typography variant="caption" className="dev-email">
@@ -775,7 +698,6 @@ const EquipmentPage = () => {
                                             {activeWell.wellAFE}
                                         </Typography>
                                     </Box>
-                                    {/* Edit button after AFE */}
                                     {isAdmin && (
                                         <IconButton
                                             size="small"
@@ -808,7 +730,6 @@ const EquipmentPage = () => {
                                 {activeWell ? 'Change' : 'Assign Well'}
                             </Button>
 
-                            {/* Add Phase Button in header */}
                             {isAdmin && activeWell && (
                                 <Button
                                     size="small"
@@ -823,7 +744,6 @@ const EquipmentPage = () => {
                                 </Button>
                             )}
 
-                            {/* Column selector */}
                             <FormControl size="small" className="column-selector">
                                 <Select
                                     value={activeWellColumns}
@@ -882,7 +802,6 @@ const EquipmentPage = () => {
                     )}
                 </Box>
 
-                {/* Vertical Divider */}
                 <Divider orientation="vertical" flexItem className="wells-divider" />
 
                 {/* Next Well Section */}
@@ -905,7 +824,6 @@ const EquipmentPage = () => {
                                             {nextWell.wellAFE}
                                         </Typography>
                                     </Box>
-                                    {/* Edit button after AFE */}
                                     {isAdmin && (
                                         <IconButton
                                             size="small"
@@ -938,7 +856,6 @@ const EquipmentPage = () => {
                                 {nextWell ? 'Change' : 'Assign Well'}
                             </Button>
 
-                            {/* Add Phase Button in header */}
                             {isAdmin && nextWell && (
                                 <Button
                                     size="small"
@@ -953,7 +870,6 @@ const EquipmentPage = () => {
                                 </Button>
                             )}
 
-                            {/* Column selector */}
                             <FormControl size="small" className="column-selector">
                                 <Select
                                     value={nextWellColumns}
