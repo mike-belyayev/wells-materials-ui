@@ -4,7 +4,6 @@ import {
     MenuItem, Select, TextField, Popover, FormControl, Divider, Snackbar, Alert
 } from '@mui/material';
 import { Add, Search, Edit, Refresh } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import WellColumn from '../components/EquipmentPage/WellColumn';
 import CreateWellModal from '../components/EquipmentPage/CreateWellModal';
@@ -25,7 +24,6 @@ const AUTO_REFRESH_INTERVAL = 15 * 60;
 const EquipmentPage = () => {
     const { logout, user } = useAuth();
     const isAdmin = user?.isAdmin || false;
-    const navigate = useNavigate();
 
     // Get user's home location - this becomes the wellOwner/rig
     const userRig = user?.homeLocation || 'NSC';
