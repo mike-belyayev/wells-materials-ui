@@ -3,7 +3,7 @@ import {
     AppBar, Toolbar, IconButton, Typography, Box, Button,
     MenuItem, Select, TextField, Popover, FormControl, Divider, Snackbar, Alert
 } from '@mui/material';
-import { Settings, Add, Search, Edit, Refresh } from '@mui/icons-material';
+import { Add, Search, Edit, Refresh } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import WellColumn from '../components/EquipmentPage/WellColumn';
@@ -657,12 +657,6 @@ const EquipmentPage = () => {
                                 Mike.Belyayev@exxonmobil.com
                             </Typography>
                         </Box>
-
-                        {isAdmin && (
-                            <IconButton onClick={() => navigate('/admin')} size="small" className="admin-btn">
-                                <Settings />
-                            </IconButton>
-                        )}
 
                         <Typography variant="body2" noWrap className="user-name">
                             {user?.userName}
